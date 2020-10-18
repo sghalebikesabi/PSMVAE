@@ -32,7 +32,6 @@ def parse_args():
 
     parser.add_argument('--data-file', nargs='?', default='data/breast', help='input data directory')
     parser.add_argument('--header', nargs='?', default=None, help='does data set have header')
-    parser.add_argument('--image-dim-0', type=int, default=28, help='image dim 0 (default: 29)')
     parser.add_argument('--train-pct', type=int, default=0.8, metavar='N', help='Percentage of train data set (default: 80)')
     parser.add_argument('--val-pct', type=int, default=0.1, metavar='N', help='Percentage of train data set (default: 80)')
     parser.add_argument('--miss-type', nargs='?', default='MNAR1var', choices=miss_type_map.keys(), help='missingness type to be induced')
@@ -85,7 +84,7 @@ def main(args):
     data_val.to_csv(os.path.join(args.data_file, f"data_{args.seed}.val"), header=False, index=False)
     data_test.to_csv(os.path.join(args.data_file, f"data_{args.seed}.test"), header=False, index=False)
     
-    if patternsets != None:
+    if patternsets is not None:
         patternsets_train, patternsets_val, patternsets_test = patternsets.iloc[random_permute[:train_idx]], patternsets.iloc[random_permute[train_idx:val_idx]], patternsets.iloc[random_permute[val_idx:]]  
         patternsets_train.to_csv(os.path.join(args.data_file, "miss_data", f"{miss_file_name}_patternsets.train"), header=False, index=False)
         patternsets_val.to_csv(os.path.join(args.data_file, "miss_data", f"{miss_file_name}_patternsets.val"), header=False, index=False)
