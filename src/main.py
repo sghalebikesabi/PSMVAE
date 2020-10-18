@@ -40,7 +40,7 @@ def parse_args(argv):
 
     # input data
     parser.add_argument('--compl-data-file', nargs='?', default='data/wine/data_0', help='complete data file (without header, without file name ending)')
-    parser.add_argument('--miss-data-file', nargs='?', default='data/wine/miss_data/MNAR1var_notuniform_frac_20_seed_3', help='missing data file (without header, without file name ending)')
+    parser.add_argument('--miss-data-file', nargs='?', default='data/wine/miss_data/MNAR1var_notuniform_frac_20_seed_0', help='missing data file (without header, without file name ending)')
     parser.add_argument('--targets-file', nargs='?', default=None, help='targets file (without header, without file name ending)')
     
     # logging results
@@ -51,7 +51,7 @@ def parse_args(argv):
     parser.add_argument('--seed', type=int, default=123, metavar='S', help='random seed (default: 1)')
 
     # model parameters
-    parser.add_argument('--model-class', nargs='?', default='PSMVAE_b', choices=model_map.keys(), help='model class, choices: ' 
+    parser.add_argument('--model-class', nargs='?', default='PSMVAE_a', choices=model_map.keys(), help='model class, choices: ' 
                             + ' '.join(model_map.keys()))
     parser.add_argument('--batch-size', type=int, default=200, metavar='N', help='input batch size for training (default: 200)')
     parser.add_argument('--max-epochs', type=int, default=10, metavar='N', help='number of epochs to train (default: 1,000)')
@@ -64,7 +64,7 @@ def parse_args(argv):
     parser.add_argument('--z-dim', type=int, default=20, help='dimension of latent factor z (default: 20)')
     parser.add_argument('--r-cat-dim', type=int, default=10, help='dimension of latent factor s (default: 10)')  # TODO
     parser.add_argument('--h-dim', type=int, default=128, help='dimension of hidden layers (default: 128)')
-    parser.add_argument('--pi', type=float, default=0.05, help='1-pi is probability of supervision of xmis')
+    parser.add_argument('--pi', type=float, default=0.005, help='1-pi is probability of supervision of xmis')
     parser.add_argument('--z-beta', type=float, default=1, help='weight of z KLD')
     parser.add_argument('--r-beta', type=float, default=1, help='weight of r KLD')
     parser.add_argument('--xmis-beta', type=float, default=1, help='weight of xmis KLD')

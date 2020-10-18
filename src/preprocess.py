@@ -8,11 +8,10 @@ import random
 os.environ['PYDEVD_WARN_EVALUATION_TIMEOUT']= '10.00'
 
 
-
 def MCAR(data, missingness_ratio = 0.2, seed = 0):
     np.random.seed(seed)
     M = pd.DataFrame(np.random.binomial(size=data.shape, n=1, p=missingness_ratio) == True)
-    return(M) 
+    return(M, None) 
 
 
 def MAR(data, missingness_ratio=0.2, seed = 0):
@@ -29,13 +28,13 @@ def MAR(data, missingness_ratio=0.2, seed = 0):
         partial_ratio = (missingness_ratio*m/(m-2))/(mean_missing + 1.e-16)
         if mean_missing > 0 and mean_missing < 0.9:
             break
-    M_partial = pd.DataFrame(np.random.binomial(size=(np.sum(missing), m-2), n=1, p=missingness_ratio) == True)
+    M_partial = pd.DataFrame(np.random.binomial(size=(np.sum(missing),m-2), n=1, p=missingness_ratio) == True)
     M_partial2 = np.zeros((n,m-2))
     M_partial2[missing, :] = M_partial
     M = np.zeros((n,m), dtype=bool)
     M[:,np.delete(np.arange(m),[x1,x2])] = M_partial2
     M = pd.DataFrame(M)
-    return(M)     
+    return(M, pd.DataFrame(missing))     
 
 
 def label_dependent_missingness(data, labels, missingness_ratio=0.2, seed = 0):
@@ -56,7 +55,7 @@ def label_dependent_missingness(data, labels, missingness_ratio=0.2, seed = 0):
         M[np.reshape(labels==i, (-1)), np.expand_dims(block, axis=1)] = prob_missing<0.5
         j += 1
     M = pd.DataFrame(M)
-    return(M)     
+    return(M, pd.DataFrame(labels))     
 
 
 def label_dependent_missingness_no_noise(data, labels, missingness_ratio=0.2, seed = 0):
@@ -71,11 +70,11 @@ def label_dependent_missingness_no_noise(data, labels, missingness_ratio=0.2, se
         # block missingness
         start = int(j*m/len(unique_labels)) 
         end = start + num_block_missing_feature
-        block = np.concatenate((np.arange(start, np.min([end, m])), np.arange(0, end-784)))
-        M[(labels==i).values.reshape((-1)), np.expand_dims(block, axis=1)] = 1
+        block = np.concatenate((np.arange(start, np.min([end, m])), np.arange(0, end-data.shape[1])))
+        M[(labels==i).values.reshape((-1)), np.expand_dims(block, axis=1)] = int(np.random.uniform()>0.5)
         j += 1
     M = pd.DataFrame(M)
-    return(M)     
+    return(M, labels)     
 
 
 def MNARsum(data, missingness_ratio = 0.2, k = 5, seed = 0):
@@ -97,7 +96,7 @@ def MNARsum(data, missingness_ratio = 0.2, k = 5, seed = 0):
         M[save,start:end] = 1
         quantile_old = quantile_new
     M = pd.DataFrame(M)
-    return(M)     
+    return(M, None)     
 
 
 def MNAR1varMCAR(data, missingness_ratio = 0.2, seed = 0):
@@ -115,12 +114,12 @@ def MNAR1varMCAR(data, missingness_ratio = 0.2, seed = 0):
         if (sum(data.loc[:, var_ind] > var_med) > n*0.1) and (sum(data.loc[:, var_ind] > var_med) < n*0.9):
             break
     M[:, var_ind] = 0
-    M[data.loc[:, var_ind] > var_med, var_ind] = np.random.binomial(1, missingness_ratio, size=sum(data.loc[:, var_ind] > var_med))
+    M[data.loc[:, var_ind] > var_med, var_ind] = np.random.binomial(1, 0.5, size=sum(data.loc[:, var_ind] > var_med))
     
     miss_set = data.loc[:, var_ind] > var_med
 
     M = pd.DataFrame(M)
-    return(M)     
+    return(M, (data.loc[:, var_ind] > var_med))     
 
 
 def MNAR1var(data, missingness_ratio = 0.2, seed = 0):
@@ -142,7 +141,7 @@ def MNAR1var(data, missingness_ratio = 0.2, seed = 0):
     # miss_set = data.loc[:, var_ind] > var_med
 
     M = pd.DataFrame(M)
-    return(M)     
+    return(M, (data.loc[:, var_ind] > var_med))     
 
 
 def MNAR2var(data, missingness_ratio = 0.2, seed = 0):
@@ -164,4 +163,21 @@ def MNAR2var(data, missingness_ratio = 0.2, seed = 0):
     M[data.loc[:, var_ind[1]] > var_med_1, var_ind[1]] = np.random.binomial(1, missingness_ratio, size=sum(data.loc[:, var_ind[1]] > var_med_1))
 
     M = pd.DataFrame(M)
-    return(M)     
+    return(M, None)     
+
+
+def logit_missingness(data, missingness_ratio = 0.2, seed = 0):
+    np.random.seed(seed)
+    data = pd.DataFrame(data)
+    n,m = data.shape
+    M = np.zeros((n,m), dtype=bool)
+
+    b = np.exp(missingness_ratio)/(np.exp(missingness_ratio)+1)
+    W = np.randn(m)
+
+    P = ((data - data.mean(0))*W + b)
+
+    M[data.loc[:, var_ind] > var_med, var_ind] = np.random.binomial(1, missingness_ratio, size=sum(data.loc[:, var_ind] > var_med))
+
+    M = pd.DataFrame(M)
+    return(M, (data.loc[:, var_ind] > var_med))     

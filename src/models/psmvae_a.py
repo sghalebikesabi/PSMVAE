@@ -1,4 +1,5 @@
 import torch
+from torch import nn
 from torch.nn import functional as F
 
 
@@ -43,6 +44,10 @@ class Model(torch.nn.Module):
         self.fc_h_xm = torch.nn.Linear(self.h_dim, self.input_dim + self.input_dim)
 
         self.fc_x_m = torch.nn.Linear(self.input_dim*2 + self.r_cat_dim, self.input_dim)
+        self.W = torch.nn.ParameterList([nn.Parameter(torch.zeros((self.input_dim, 1), device=model_params_dict.device)) for i in range(self.r_cat_dim)])
+        self.b = torch.nn.ParameterList([nn.Parameter(torch.zeros((1, self.input_dim), device=model_params_dict.device)) for i in range(self.r_cat_dim)])
+        for i in range(self.r_cat_dim):
+            torch.nn.init.xavier_normal_(self.W[i])
 
     def qy_graph(self, xm):
         # q(y|x)
@@ -88,7 +93,7 @@ class Model(torch.nn.Module):
 
         return z, z_mu_post, torch.clamp(z_logvar_post, -15, 15)
 
-    def decoder(self, z, y, test_mode, L=1):
+    def decoder(self, z, y, m, i, test_mode, L=1):
 
         # p(xmis|y) 
         # xmis_mu_prior = self.fc_y_xmis(y)
@@ -106,10 +111,13 @@ class Model(torch.nn.Module):
         h2 = F.relu(self.fc_hz_h(hz))
         x = self.fc_h_xm(h2)
 
+        m_input = x[:,:self.input_dim] * (1-m.float()) + x[:,self.input_dim:self.input_dim*2] * m
+
         recon = {
             'xobs': x[:,:self.input_dim],
             'xmis': x[:,self.input_dim:self.input_dim*2],
-            'M_sim_miss': torch.sigmoid(self.fc_x_m(torch.cat([x[:,:self.input_dim], x[:, self.input_dim:self.input_dim*2], y.repeat((L, 1))], 1))),
+            # 'M_sim_miss': torch.sigmoid(self.fc_x_m(torch.cat([x[:,:self.input_dim], x[:, self.input_dim:self.input_dim*2], y.repeat((L, 1))], 1))),
+            'M_sim_miss': torch.sigmoid(torch.einsum("ij, jk -> ij", [m_input, torch.nn.functional.softplus(self.W[i])]) + self.b[i]),
         }
                 
         return z_mu_prior, torch.clamp(z_logvar_prior, -15, 15), recon #xmis_mu_prior, torch.clamp(xmis_logvar_prior, -15, 15), 
@@ -132,7 +140,7 @@ class Model(torch.nn.Module):
             else:
                 z[i], zm[i], zv[i] = self.qz_graph(xm, y, test_mode, L)
                 xmis[i], xmis_mu[i], xmis_logvar[i] = self.qxmis_graph(xm.repeat((L, 1)), z[i], y.repeat((L, 1)), test_mode, L)
-            zm_prior[i], zv_prior[i], recon[i] = self.decoder(z[i], y, test_mode, L)
+            zm_prior[i], zv_prior[i], recon[i] = self.decoder(z[i], y, m, i, test_mode, L)
             # zm_prior[i], zv_prior[i], xmis_mu_prior[i], xmis_logvar_prior[i], recon[i] = self.decoder(z[i], y, test_mode, L)
         
         latent_samples = {
