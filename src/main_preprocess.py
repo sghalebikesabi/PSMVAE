@@ -37,6 +37,10 @@ def parse_args():
     parser.add_argument('--miss-type', nargs='?', default='MNAR1var', choices=miss_type_map.keys(), help='missingness type to be induced')
     parser.add_argument('--miss-ratio', type=float, default=0.8, help='missingness ratio')
     parser.add_argument('--seed', type=int, default=0, help='random seed (default: 1)')
+    
+    # robustness study
+    parser.add_argument('--n', type=float, default=None, help='number of observations')
+    parser.add_argument('--m', type=float, default=None, help='number of features')
 
     args = parser.parse_args()
     args.uniform = True
@@ -59,6 +63,14 @@ def main(args):
         targets = pd.read_csv(os.path.join(args.data_file, "targets.csv"), header=None)
     except FileNotFoundError:
         pass
+
+    # robustness study
+    if args.n is not None:
+        miss_file_name += '_n_' + str(args.n)
+        data = data.sample(args.n, axis=0)
+    if args.m is not None:
+        miss_file_name += '_m_' + str(args.m)
+        data = data.sample(args.m, axis=1)
 
     # induce missingness
     np.random.seed(args.seed)

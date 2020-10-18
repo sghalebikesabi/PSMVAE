@@ -10,7 +10,7 @@ do
         do
             for miss_ratio in 0.20 0.80
             do
-                python src/main_preprocess.py --miss-ratio "${miss_ratio}" --data-file "data/${input}" --miss-type "${miss}" --seed "${seed}" 
+                python [src/main_preprocess.py --miss-ratio "${miss_ratio}" --data-file "data/${input}" --miss-type "${miss}" --seed "${seed}" 
             done
         done
     done
