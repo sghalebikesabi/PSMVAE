@@ -4,7 +4,7 @@ import os
 import pandas as pd
 from pathlib import Path
 
-import data
+import preprocess as data 
 
 
 miss_type_map = {
@@ -35,6 +35,7 @@ def parse_args():
 
     args = parser.parse_args()
 
+    args.uniform = True
     return(args)
 
 
