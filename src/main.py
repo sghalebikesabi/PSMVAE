@@ -39,8 +39,8 @@ def parse_args(argv):
     parser = argparse.ArgumentParser(description='VAEs for missingness example')
 
     # input data
-    parser.add_argument('--compl-data-file', nargs='?', default='data/wine/data_0', help='complete data file (without header, without file name ending)')
-    parser.add_argument('--miss-data-file', nargs='?', default='data/wine/miss_data/MNAR1var_notuniform_frac_20_seed_0', help='missing data file (without header, without file name ending)')
+    parser.add_argument('--compl-data-file', nargs='?', default='data/credit/data_0_n_5000_m_3', help='complete data file (without header, without file name ending)')
+    parser.add_argument('--miss-data-file', nargs='?', default='data/credit/miss_data/MNAR1var_uniform_frac_80_seed_0_n_5000_m_3', help='missing data file (without header, without file name ending)')
     parser.add_argument('--targets-file', nargs='?', default=None, help='targets file (without header, without file name ending)')
     
     # logging results
@@ -83,9 +83,9 @@ def parse_args(argv):
         model_map['gain'] = gain.gain
 
     if 'miwae' in args.model_class:
-        from models import notmiwae
-        model_map['miwae'] = notmiwae.model
-        model_map['notmiwae'] = notmiwae.model
+        from models import miwae
+        model_map['miwae'] = miwae.notMiwae
+        model_map['notmiwae'] = miwae.notMiwae
         args.z_dim = 1
 
     if 'IPTW' in args.model_class:
@@ -179,7 +179,7 @@ def main(args):
             test_imputed = np.mean(test_imputed, axis=0)            
         if 'VAE' in args.model_class:
             train_imputed, train_imputed_1, test_imputed = model_map[args.model_class](data_train, data_test, compl_data_train, compl_data_test, wandb, args, norm_parameters)
-        elif args.model_class == 'miwae':
+        elif (args.model_class == 'miwae') or (args.model_class == 'notmiwae'):
             train_imputed, test_imputed = model_map[args.model_class](compl_data_train, data_train, compl_data_test, compl_data_test, norm_parameters, wandb, args)
 
     # compute losses

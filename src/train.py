@@ -67,7 +67,7 @@ def loss(recon, variational_params, latent_samples, data, compl_data, M_obs, M_m
         kld_xmis = torch.tensor([0]).to(data.device)
         mse_xmis = torch.tensor([0]).to(data.device)
         log_xmis_prior = torch.tensor([0]).to(data.device)
-        recon_data_xmis = compl_data
+        # recon_data_xmis = compl_data
 
     if variational_params['qy'] is not None:
         nent_r = variational_params['qy'] * torch.nn.LogSoftmax(1)(variational_params['qy_logit'])
@@ -77,7 +77,7 @@ def loss(recon, variational_params, latent_samples, data, compl_data, M_obs, M_m
         mse_data = (variational_params['qy'].repeat((L,1)).T * mse_data).sum(0).mean()
         mse_mask = (variational_params['qy'].repeat((L,1)).T * mse_mask).sum(0).mean()
 
-        recon_data_xobs = torch.einsum('ir, rij -> ij', [variational_params['qy'], recon_data_xobs])
+        # recon_data_xobs = torch.einsum('ir, rij -> ij', [variational_params['qy'], recon_data_xobs])
     else:
         kld_r = torch.tensor(0).to(data.device).float()
         mse_data = mse_data.mean()
@@ -92,8 +92,8 @@ def loss(recon, variational_params, latent_samples, data, compl_data, M_obs, M_m
         mode + ' r KLD':  kld_r,
         mode + ' miss mask MSE': mse_mask,
         mode + ' xobs MSE': mse_data,
-        mode + ' xobs Imputation RMSE': torch.tensor(rmse_loss(recon_data_xobs.detach().cpu().numpy(), compl_data.cpu().numpy(), M_miss.cpu().numpy(), True)).to(data.device),
-        mode + ' xmis Imputation RMSE': torch.tensor(rmse_loss(recon_data_xmis.detach().cpu().numpy(), compl_data.cpu().numpy(), M_miss.cpu().numpy(), True)).to(data.device),
+        # mode + ' xobs Imputation RMSE': torch.tensor(rmse_loss(recon_data_xobs.detach().cpu().numpy(), compl_data.cpu().numpy(), M_miss.cpu().numpy(), True)).to(data.device),
+        # mode + ' xmis Imputation RMSE': torch.tensor(rmse_loss(recon_data_xmis.detach().cpu().numpy(), compl_data.cpu().numpy(), M_miss.cpu().numpy(), True)).to(data.device),
     }
 
     return loss_dict

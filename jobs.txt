@@ -25,22 +25,22 @@ Submitted batch job 775497
 Submitted batch job 775498
 
 ./run_m.sh 
-Submitted batch job 775571
-Submitted batch job 775572
-Submitted batch job 775573
-Submitted batch job 775574
-Submitted batch job 775575
-Submitted batch job 775576
-Submitted batch job 775577
-Submitted batch job 775578
-Submitted batch job 775579
-Submitted batch job 775580
-Submitted batch job 775581
-Submitted batch job 775582
-Submitted batch job 775583
-Submitted batch job 775584
-Submitted batch job 775585
-Submitted batch job 775586
+Submitted batch job 778266
+Submitted batch job 778267
+Submitted batch job 778268
+Submitted batch job 778269
+Submitted batch job 778270
+Submitted batch job 778271
+Submitted batch job 778272
+Submitted batch job 778273
+Submitted batch job 778274
+Submitted batch job 778275
+Submitted batch job 778276
+Submitted batch job 778277
+Submitted batch job 778278
+Submitted batch job 778279
+Submitted batch job 778280
+Submitted batch job 778281
 
 ./run_n.sh
 Submitted batch job 775515
@@ -59,21 +59,25 @@ Submitted batch job 775527
 Submitted batch job 775528
 Submitted batch job 775529
 Submitted batch job 775530
+Submitted batch job 778187                                                                                                                                                   
+Submitted batch job 778188                                                                                                                                                   
+Submitted batch job 778189                                                                                                                                                   
 
 ./run_ratio.sh 
-Submitted batch job 775555
-Submitted batch job 775556
-Submitted batch job 775557
-Submitted batch job 775558
-Submitted batch job 775559
-Submitted batch job 775560
-Submitted batch job 775561
-Submitted batch job 775562
-Submitted batch job 775563
-Submitted batch job 775564
-Submitted batch job 775565
-Submitted batch job 775566
-Submitted batch job 775567
-Submitted batch job 775568
-Submitted batch job 775569
-Submitted batch job 775570
+greytail{ghalebik} % /data/localhost/not-backed-up/scratch/ghalebik/slurm-script-templates % ./run_ratio.sh 
+Submitted batch job 778764
+Submitted batch job 778765
+Submitted batch job 778766
+Submitted batch job 778767
+Submitted batch job 778768
+Submitted batch job 778769
+Submitted batch job 778770
+Submitted batch job 778771
+Submitted batch job 778772
+Submitted batch job 778773
+Submitted batch job 778774
+Submitted batch job 778775
+Submitted batch job 778776
+Submitted batch job 778777
+Submitted batch job 778778
+Submitted batch job 778779
