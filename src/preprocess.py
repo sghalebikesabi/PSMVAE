@@ -133,15 +133,15 @@ def MNAR1var(data, missingness_ratio = 0.2, seed = 0):
 
     while True:
         var_ind = np.random.choice(m)    
-        var_med = data.loc[:, var_ind].median()
-        if (sum(data.loc[:, var_ind] > var_med) > n*0.1) and (sum(data.loc[:, var_ind] > var_med) < n*0.9):
+        var_med = data.iloc[:, var_ind].median()
+        if (sum(data.iloc[:, var_ind] > var_med) > n*0.1) and (sum(data.iloc[:, var_ind] > var_med) < n*0.9):
             break
     
-    M[data.loc[:, var_ind] > var_med, var_ind] = np.random.binomial(1, missingness_ratio, size=sum(data.loc[:, var_ind] > var_med))
+    M[data.iloc[:, var_ind] > var_med, var_ind] = np.random.binomial(1, missingness_ratio, size=sum(data.iloc[:, var_ind] > var_med))
     # miss_set = data.loc[:, var_ind] > var_med
 
     M = pd.DataFrame(M)
-    return(M, (data.loc[:, var_ind] > var_med))     
+    return(M, (data.iloc[:, var_ind] > var_med))     
 
 
 def MNAR2var(data, missingness_ratio = 0.2, seed = 0):

@@ -30,7 +30,7 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description='Deep heterogenous latent factor modelling')
 
-    parser.add_argument('--data-file', nargs='?', default='data/breast', help='input data directory')
+    parser.add_argument('--data-file', nargs='?', default='data/credit', help='input data directory')
     parser.add_argument('--header', nargs='?', default=None, help='does data set have header')
     parser.add_argument('--train-pct', type=int, default=0.8, metavar='N', help='Percentage of train data set (default: 80)')
     parser.add_argument('--val-pct', type=int, default=0.1, metavar='N', help='Percentage of train data set (default: 80)')
@@ -39,8 +39,8 @@ def parse_args():
     parser.add_argument('--seed', type=int, default=0, help='random seed (default: 1)')
     
     # robustness study
-    parser.add_argument('--n', type=float, default=None, help='number of observations')
-    parser.add_argument('--m', type=float, default=None, help='number of features')
+    parser.add_argument('--n', type=int, default=None, help='number of observations')
+    parser.add_argument('--m', type=int, default=3, help='number of features')
 
     args = parser.parse_args()
     args.uniform = True
