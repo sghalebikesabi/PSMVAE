@@ -96,6 +96,12 @@ def parse_args(argv):
     elif ('PSMVAEwoM' == args.model_class):
         args.miss_mask_training = False
 
+    if args.model_class == 'mice': #TODO
+        args.num_samples = 1
+
+    if args.cuda:
+        args.log_interval = 1000
+
     return(args)
 
 

@@ -40,7 +40,7 @@ def parse_args():
     
     # robustness study
     parser.add_argument('--n', type=int, default=None, help='number of observations')
-    parser.add_argument('--m', type=int, default=3, help='number of features')
+    parser.add_argument('--m', type=int, default=None, help='number of features')
 
     args = parser.parse_args()
     args.uniform = True
