@@ -2,11 +2,11 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 from torch import optim
+from torchvision import datasets, transforms
 from tqdm import tqdm
 
-from utils import rmse_loss, log_normal, normal_KLD, impute, init_weights, renormalization, rounding
+from utils import rmse_loss, log_normal, normal_KLD, impute, init_weights, renormalization, rounding, save_image_reconstructions
 from models import vae, gmvae, psmvae_a, psmvae_b
-
 
 model_map = {
     'VAE': vae.VAE,
@@ -22,11 +22,12 @@ def loss(recon, variational_params, latent_samples, data, compl_data, M_obs, M_m
 
     data_weight = torch.sum(M_obs + M_miss)/torch.sum(M_obs).float() # adjust mse to missingness rate
     
-    # mse_data = ((recon['xobs'] * M_obs.repeat((L,1)) - data.repeat((L,1)) * M_obs.repeat((L,1)))**2).sum(-1) 
-    mse_data = - log_normal(data*M_obs, recon['xobs']*M_obs, torch.tensor([0.25]).to(args.device)).sum(-1)
+    mse_data = ((recon['xobs'] * M_obs.repeat((L,1)) - data.repeat((L,1)) * M_obs.repeat((L,1)))**2).sum(-1) 
+    if args.mnist:
+        mse_data = torch.stack([torch.nn.functional.binary_cross_entropy(recon['xobs'][i], data, reduction='none').sum(-1) for i in range(args.r_cat_dim)]) # TODO
+    else:
+        mse_data = - log_normal(data*M_obs, recon['xobs']*M_obs, torch.tensor([0.25]).to(args.device)).sum(-1)
     kld_z = normal_KLD(latent_samples['z'], variational_params['z_mu'].repeat((1,L,1)), variational_params['z_logvar'].repeat((1,L,1)), variational_params['z_mu_prior'].repeat((1,L,1)), variational_params['z_logvar_prior'].repeat((1,L,1))).sum(-1)
-
-    recon_data_xobs = recon['xobs']
     
     if recon['M_sim_miss'] is not None:
         pi = recon['M_sim_miss']
@@ -36,55 +37,46 @@ def loss(recon, variational_params, latent_samples, data, compl_data, M_obs, M_m
         mse_mask = torch.tensor(0).to(data.device).float()
  
     if variational_params['xmis_mu'] is not None:
-
-        # kld_xmis = normal_KLD(latent_samples['xmis'], variational_params['xmis_mu'], variational_params['xmis_logvar'], variational_params['xmis_mu_prior'], variational_params['xmis_logvar_prior']).sum(-1)
-        # kld_xmis = (variational_params['qy'].T * kld_xmis).sum(0).mean()
         
         if 'PSMVAE' not in args.model_class: 
             kld_xmis = normal_KLD(latent_samples['xmis'], variational_params['xmis_mu'], variational_params['xmis_logvar'], recon['xmis'], torch.sqrt(torch.tensor([0.25]).to(args.device))).sum(-1)
             mse_xmis = torch.tensor([0]).to(data.device)
 
         elif 'PSMVAE' in args.model_class:
-
-            # kld_xmis = M_miss*normal_KLD(latent_samples['xmis'], variational_params['xmis_mu'], variational_params['xmis_logvar'], variational_params['xmis_mu_prior'], variational_params['xmis_logvar_prior']).sum(-1)
-            # kld_xmis = M_obs*normal_KLD(latent_samples['xmis'], variational_params['xmis_mu'], variational_params['xmis_logvar'], variational_params['xmis_mu_prior'], variational_params['xmis_logvar_prior']).sum(-1)
-            kld_xmis = (M_miss*normal_KLD(latent_samples['xmis'], variational_params['xmis_mu'], variational_params['xmis_logvar'], recon['xmis'], torch.sqrt(torch.tensor([0.25]).to(args.device)))).sum(-1)
-            kld_xmis += (M_obs*normal_KLD(latent_samples['xmis'], variational_params['xmis_mu'], variational_params['xmis_logvar'], recon['xmis'], torch.sqrt(torch.tensor([0.25]).to(args.device)))).sum(-1) * args.pi
-            
-            mse_xmis = -log_normal(data*M_obs, recon['xmis']*M_obs, torch.tensor([0.25]).to(args.device)) * (1 - args.pi)
-            # mse_xmis -= log_normal(latent_samples['xmis']*M_miss, recon['xmis']*M_miss, 0.25) 
-            # mse_xmis -= log_normal(latent_samples['xmis']*M_obs, recon['xmis']*M_obs, 0.25) * args.pi
-
-            # log_xmis_prior = M_miss*log_normal(latent_samples['xmis'], variational_params['xmis_mu_prior'], torch.exp(variational_params['xmis_logvar_prior']))
-            # log_xmis_prior += M_obs*log_normal(latent_samples['xmis'], variational_params['xmis_mu_prior'], torch.exp(variational_params['xmis_logvar_prior']))
+            if args.mnist:
+                kld_xmis = (M_miss*normal_KLD(latent_samples['xmis'], variational_params['xmis_mu'], variational_params['xmis_logvar'], recon['xmis'], torch.sqrt(torch.tensor([0.25]).to(args.device)))).sum(-1)
+                kld_xmis += (M_obs*normal_KLD(latent_samples['xmis'], variational_params['xmis_mu'], variational_params['xmis_logvar'], recon['xmis'], torch.sqrt(torch.tensor([0.25]).to(args.device)))).sum(-1) * args.pi
+                
+                mse_xmis = -log_normal(data*M_obs, recon['xmis']*M_obs, torch.tensor([0.25]).to(args.device)) * (1 - args.pi)
+            else:
+                kld_xmis = M_miss*torch.nn.functional.binary_cross_entropy_with_logits(latent_samples['xmis'], torch.sigmoid(variational_params['xmis_mu'], variational_params['xmis_logvar'], recon['xmis'], torch.sqrt(torch.tensor([0.25]).to(args.device)))).sum(-1)
+                kld_xmis += (M_obs*normal_KLD(latent_samples['xmis'], variational_params['xmis_mu'], variational_params['xmis_logvar'], recon['xmis'], torch.sqrt(torch.tensor([0.25]).to(args.device)))).sum(-1) * args.pi
+                
+                mse_xmis = -log_normal(data*M_obs, recon['xmis']*M_obs, torch.tensor([0.25]).to(args.device)) * (1 - args.pi)
                             
             # weight with pattern set probs
             mse_xmis = (variational_params['qy'].repeat((L, 1)).T * mse_xmis.sum(-1)).sum(0).mean()
-            # log_xmis_prior = (variational_params['qy'].repeat((L, 1)).T * log_xmis_prior.sum(-1)).sum(0).mean()                        
         kld_xmis = (variational_params['qy'].repeat((L, 1)).T * kld_xmis).sum(0).mean()
-        recon_data_xmis = torch.einsum('ir, rij -> ij', [variational_params['qy'], recon['xmis']])
     else:
         kld_xmis = torch.tensor([0]).to(data.device)
         mse_xmis = torch.tensor([0]).to(data.device)
         log_xmis_prior = torch.tensor([0]).to(data.device)
-        recon_data_xmis = compl_data
 
     if variational_params['qy'] is not None:
         nent_r = variational_params['qy'] * torch.nn.LogSoftmax(1)(variational_params['qy_logit'])
         kld_r = (nent_r.sum(-1) - np.log(1/variational_params['qy'].shape[1])).mean()
         
-        kld_z = (variational_params['qy'].repeat((L,1)).T * kld_z).sum(0).mean()
-        mse_data = (variational_params['qy'].repeat((L,1)).T * mse_data).sum(0).mean()
-        mse_mask = (variational_params['qy'].repeat((L,1)).T * mse_mask).sum(0).mean()
+        kld_z = (variational_params['qy'].repeat((L,1)).T * kld_z).sum(0).sum()
+        mse_data = (variational_params['qy'].repeat((L,1)).T * mse_data).sum(0).sum()
+        mse_mask = (variational_params['qy'].repeat((L,1)).T * mse_mask).sum(0).sum()
 
-        recon_data_xobs = torch.einsum('ir, rij -> ij', [variational_params['qy'], recon_data_xobs])
     else:
         kld_r = torch.tensor(0).to(data.device).float()
-        mse_data = mse_data.mean()
-        mse_mask = mse_mask.mean()
-        kld_z = kld_z.mean()
+        mse_data = mse_data.sum()
+        mse_mask = mse_mask.sum()
+        kld_z = kld_z.sum()
 
-    loss = data_weight * mse_data + mse_mask + mse_xmis + args.z_beta * kld_z + args.r_beta * kld_r + args.xmis_beta * kld_xmis # + log_xmis_prior
+    loss = data_weight * mse_data + mse_mask + mse_xmis + args.z_beta * kld_z + args.r_beta * kld_r + args.xmis_beta * kld_xmis 
 
     loss_dict = {                 
         mode + ' opt loss': loss,
@@ -92,8 +84,6 @@ def loss(recon, variational_params, latent_samples, data, compl_data, M_obs, M_m
         mode + ' r KLD':  kld_r,
         mode + ' miss mask MSE': mse_mask,
         mode + ' xobs MSE': mse_data,
-        mode + ' xobs Imputation RMSE': torch.tensor(rmse_loss(recon_data_xobs.detach().cpu().numpy(), compl_data.cpu().numpy(), M_miss.cpu().numpy(), True)).to(data.device),
-        mode + ' xmis Imputation RMSE': torch.tensor(rmse_loss(recon_data_xmis.detach().cpu().numpy(), compl_data.cpu().numpy(), M_miss.cpu().numpy(), True)).to(data.device),
     }
 
     return loss_dict
@@ -117,7 +107,6 @@ def train_VAE(data_train_full, data_test_full, compl_data_train_full, compl_data
         for batch_idx, (data, compl_data) in enumerate(train_loader):
             # data
             data = data.float().to(args.device)
-            compl_data = compl_data.float().to(args.device)
             M_obs = (~data.isnan() & ~compl_data.isnan()).to(args.device).float()
             M_miss = (data.isnan() & ~compl_data.isnan()).to(args.device).float()
             data[data!=data] = 0
@@ -129,6 +118,8 @@ def train_VAE(data_train_full, data_test_full, compl_data_train_full, compl_data
             optimizer.step()
 
         if epoch % args.log_interval == 0:
+            if args.mnist:  
+                save_image_reconstructions(recon, compl_data, M_miss, variational_params['qy'], epoch, 28, 'images', 'test')
             wandb.log({k: v.cpu().detach().numpy() for k, v in loss_dict.items()})
             model.eval()
             with torch.no_grad():
@@ -146,8 +137,9 @@ def train_VAE(data_train_full, data_test_full, compl_data_train_full, compl_data
 
     model.eval()
     
+    norm_type = 'minmax' * args.mnist + 'standard' * (1-args.mnist)
     with torch.no_grad():
-        compl_data_train_full_renorm = renormalization(compl_data_train_full.copy(), norm_parameters)
+        compl_data_train_full_renorm = renormalization(compl_data_train_full.copy(), norm_parameters, norm_type)
 
         if args.model_class == 'PSMVAE_a' or args.model_class == 'PSMVAE_b':
             imp_name = 'xmis'
@@ -180,12 +172,12 @@ def train_VAE(data_train_full, data_test_full, compl_data_train_full, compl_data
             # multiple importance samples
             train_imputed_xobs, train_imputed_xmis = impute(model, data_train_full, args, kwargs) 
 
-        train_imputed_xobs_ = renormalization(train_imputed_xobs.cpu(), norm_parameters)
+        train_imputed_xobs_ = renormalization(train_imputed_xobs.cpu(), norm_parameters,norm_type)
         train_imputed_xobs_ = rounding(train_imputed_xobs_, compl_data_train_full_renorm)
         train_xobs_mis_mse = rmse_loss(train_imputed_xobs_.cpu().numpy(), compl_data_train_full_renorm, M_sim_miss_train_full)
         
         if recon_train['xmis'] != None:
-            train_imputed_xmis_ = renormalization(train_imputed_xmis.cpu(), norm_parameters)
+            train_imputed_xmis_ = renormalization(train_imputed_xmis.cpu(), norm_parameters, norm_type)
             train_imputed_xmis_ = rounding(train_imputed_xmis_, compl_data_train_full_renorm)
             train_xmis_mis_mse = rmse_loss(train_imputed_xmis_.cpu().numpy(), compl_data_train_full_renorm, M_sim_miss_train_full)
         else:

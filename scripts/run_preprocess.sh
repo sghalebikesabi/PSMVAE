@@ -4,7 +4,7 @@ source venv/bin/activate
 
 for seed in 0 1 2 3 4
 do
-    for input in letter breast adult credit letter spam wine
+    for input in MNIST #letter breast adult credit letter spam wine
     do
         for miss in MNAR1var MCAR MNAR1varMCAR MAR MNAR2var #label MAR MNAR1var MNAR1varMCAR MNAR2var
         do

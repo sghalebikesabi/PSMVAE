@@ -2,6 +2,7 @@ import math
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, TensorDataset
+from torchvision.utils import save_image
 
 
 def make_deterministic(seed):
@@ -148,8 +149,11 @@ def normalization (data, norm_params = None, norm_type='standard'):
       # For each dimension
       for i in range(dim):
         min_val[i] = np.nanmin(norm_data[:,i])
-        norm_data[:,i] = norm_data[:,i] - np.nanmin(norm_data[:,i])
         max_val[i] = np.nanmax(norm_data[:,i])
+        if data.shape[1]==784:
+          min_val[i] = 0
+          max_val[i] = 255
+        norm_data[:,i] = norm_data[:,i] - np.nanmin(norm_data[:,i])
         norm_data[:,i] = norm_data[:,i] / (np.nanmax(norm_data[:,i]) + 1e-6)   
     else:
         for i in range(dim):
@@ -204,3 +208,56 @@ def renormalization (norm_data, norm_parameters, norm_type='standard'):
 
   return renorm_data
 
+
+def save_image_reconstructions(recon_batch, X, M, qy, epoch, image_dim_0, results_path, tag):
+    # sample images 
+    input_dim = X.shape[1]
+    n = min(X.shape[0], 8)
+    recon_sample_X = torch.einsum("ik, kij -> ij", [qy[:n], recon_batch['xobs'][:, :n]])
+    try:
+        recon_sample_M = np.round(recon_batch['M_sim_miss'].detach())[:n]
+    except AttributeError:
+        recon_sample_M = np.zeros(recon_sample_X.shape)
+    sample_X = X[:n]
+    sample_M = M[:n]
+    #induce red missingness
+    sample_X_with_red_miss, _ = induce_red_missingness(sample_X, sample_M, image_dim_0)
+    recon_sample_X_with_red_miss, RGB_recon_sample_X = induce_red_missingness(recon_sample_X, recon_sample_M, image_dim_0)
+    comparison = torch.cat([sample_X_with_red_miss.float(), recon_sample_X_with_red_miss.float(), RGB_recon_sample_X])
+    save_image(comparison.cpu(), results_path + '/reconstruction_' + str(tag) + '_' + str(epoch)  + '.png', nrow=n)
+
+
+def induce_red_missingness(sample_X, sample_M, image_dim_0):
+    """Function that induces red pixels in an image if the pixel values are missing.
+
+    Args:
+        sample_X: sample images saved as numpy array or pytorch tensor of dimensions [number of images, imagedim1* imagedim2].
+        sample_M: sample missingness masks of same structure as 'sample_X'.
+        image_dim_0: rows of image.
+    
+    Returns:
+        A torch tensor of the sample images with dimensions [number of images, 3, imagedim1, imagedim2]
+    """
+    # ensure input is numpy
+    if torch.is_tensor(sample_X):
+        sample_X = sample_X.detach().numpy()
+    if torch.is_tensor(sample_M):
+        sample_M = sample_M.detach().numpy()
+    
+    # reshape input
+    reshaped_sample_X = np.reshape(sample_X, (sample_X.shape[0], 1, image_dim_0, -1))
+    reshaped_sample_M = np.reshape(sample_M, (sample_X.shape[0], 1, image_dim_0, -1))
+
+    # turn to RGB scale
+    RGB_sample_image = np.repeat(reshaped_sample_X, repeats = [3], axis=1)
+    RGB_sample_M = np.repeat(reshaped_sample_M, repeats=[3], axis=1)
+    
+    # add red color
+    RGB_sample_image_with_red_miss = RGB_sample_image.copy()
+    for i in range(reshaped_sample_X.shape[0]):
+        for j in range(reshaped_sample_X.shape[2]):
+            for k in range(reshaped_sample_X.shape[3]):
+                if RGB_sample_M[i,0,j,k]:
+                    RGB_sample_image_with_red_miss[i,:,j,k] = [255, 0, 0]
+
+    return(torch.tensor(RGB_sample_image_with_red_miss), torch.tensor(RGB_sample_image))
