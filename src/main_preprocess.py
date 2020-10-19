@@ -92,10 +92,17 @@ def main(args):
     M_train.to_csv(os.path.join(args.data_file, "miss_data", miss_file_name + ".train"), header=False, index=False)
     M_val.to_csv(os.path.join(args.data_file, "miss_data", miss_file_name + ".val"), header=False, index=False)
     M_test.to_csv(os.path.join(args.data_file, "miss_data", miss_file_name + ".test"), header=False, index=False)
-    data_train.to_csv(os.path.join(args.data_file, f"data_{args.seed}.train"), header=False, index=False)
-    data_val.to_csv(os.path.join(args.data_file, f"data_{args.seed}.val"), header=False, index=False)
-    data_test.to_csv(os.path.join(args.data_file, f"data_{args.seed}.test"), header=False, index=False)
     
+    data_name = f"data_{args.seed}"
+    if args.n is not None:
+        data_name += f"_n_{args.n}"
+    if args.m is not None:
+        data_name += f"_m_{args.m}"
+    data_train.to_csv(os.path.join(args.data_file, f"{data_name}.train"), header=False, index=False)
+    data_val.to_csv(os.path.join(args.data_file, f"{data_name}.val"), header=False, index=False)
+    data_test.to_csv(os.path.join(args.data_file, f"{data_name}.test"), header=False, index=False)
+
+
     if patternsets is not None:
         patternsets_train, patternsets_val, patternsets_test = patternsets.iloc[random_permute[:train_idx]], patternsets.iloc[random_permute[train_idx:val_idx]], patternsets.iloc[random_permute[val_idx:]]  
         patternsets_train.to_csv(os.path.join(args.data_file, "miss_data", f"{miss_file_name}_patternsets.train"), header=False, index=False)
