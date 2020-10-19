@@ -59,6 +59,8 @@ Submitted batch job 775527
 Submitted batch job 775528
 Submitted batch job 775529
 Submitted batch job 775530
+Submitted batch job 776910                                                                                                     
+Submitted batch job 776911
 
 ./run_ratio.sh 
 Submitted batch job 775555

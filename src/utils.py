@@ -213,9 +213,16 @@ def save_image_reconstructions(recon_batch, X, M, qy, epoch, image_dim_0, result
     # sample images 
     input_dim = X.shape[1]
     n = min(X.shape[0], 8)
-    recon_sample_X = torch.einsum("ik, kij -> ij", [qy[:n], recon_batch['xobs'][:, :n]])
+    if qy != None:
+        classes_train = qy.argmax(1)
+        # recon_sample_X = torch.einsum("ik, kij -> ij", [qy[:n], recon_batch['xobs'][:, :n]])
+        recon_sample_X = torch.stack([recon_batch['xobs'][classes_train[i], i, :] for i in range(n)], 0)
+    else:
+        recon_sample_X = recon_batch['xobs'][:, :n]
+
     try:
-        recon_sample_M = np.round(recon_batch['M_sim_miss'].detach())[:n]
+        recon_sample_M = torch.einsum("ik, kij -> ij", [qy[:n], recon_batch['M_sim_miss'][:, :n]])
+        recon_sample_M = np.round(recon_sample_M.detach().cpu().numpy())
     except AttributeError:
         recon_sample_M = np.zeros(recon_sample_X.shape)
     sample_X = X[:n]

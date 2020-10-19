@@ -22,17 +22,23 @@ def loss(recon, variational_params, latent_samples, data, compl_data, M_obs, M_m
 
     data_weight = torch.sum(M_obs + M_miss)/torch.sum(M_obs).float() # adjust mse to missingness rate
     
-    mse_data = ((recon['xobs'] * M_obs.repeat((L,1)) - data.repeat((L,1)) * M_obs.repeat((L,1)))**2).sum(-1) 
     if args.mnist:
-        mse_data = torch.stack([torch.nn.functional.binary_cross_entropy(recon['xobs'][i], data, reduction='none').sum(-1) for i in range(args.r_cat_dim)]) # TODO
+        if variational_params['qy'] is not None:
+            mse_data = torch.stack([torch.nn.functional.binary_cross_entropy(recon['xobs'][i]*M_obs, data*M_obs, reduction='none').sum(-1) for i in range(args.r_cat_dim)]) 
+        else:
+            mse_data = torch.nn.functional.binary_cross_entropy(recon['xobs']*M_obs, data*M_obs, reduction='none').sum(-1)
     else:
         mse_data = - log_normal(data*M_obs, recon['xobs']*M_obs, torch.tensor([0.25]).to(args.device)).sum(-1)
     kld_z = normal_KLD(latent_samples['z'], variational_params['z_mu'].repeat((1,L,1)), variational_params['z_logvar'].repeat((1,L,1)), variational_params['z_mu_prior'].repeat((1,L,1)), variational_params['z_logvar_prior'].repeat((1,L,1))).sum(-1)
     
     if recon['M_sim_miss'] is not None:
-        pi = recon['M_sim_miss']
-        mpi = 1 - recon['M_sim_miss']
-        mse_mask = -torch.log(pi*M_miss.float() + mpi*(1-M_miss.float())+1e-6).sum(-1)
+        # pi = recon['M_sim_miss']
+        # mpi = 1 - recon['M_sim_miss']
+        # mse_mask = -torch.log(pi*M_miss.float() + mpi*(1-M_miss.float())+1e-6).sum(-1)
+        if variational_params['qy'] is not None:
+            mse_mask = torch.stack([torch.nn.functional.binary_cross_entropy(recon['M_sim_miss'][i], M_miss.float(), reduction='none').sum(-1) for i in range(args.r_cat_dim)])  
+        else:
+            mse_mask = torch.nn.functional.binary_cross_entropy(recon['M_sim_miss'], M_miss.float(), reduction='none').sum(-1) 
     else: 
         mse_mask = torch.tensor(0).to(data.device).float()
  

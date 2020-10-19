@@ -40,7 +40,7 @@ def parse_args(argv):
 
     # input data
     parser.add_argument('--compl-data-file', nargs='?', default='data/MNIST/data_0', help='complete data file (without header, without file name ending)')
-    parser.add_argument('--miss-data-file', nargs='?', default='data/MNIST/miss_data/MNAR1var_uniform_frac_20_seed_0', help='missing data file (without header, without file name ending)')
+    parser.add_argument('--miss-data-file', nargs='?', default='data/MNIST/miss_data/label_uniform_frac_20_seed_0', help='missing data file (without header, without file name ending)')
     parser.add_argument('--targets-file', nargs='?', default=None, help='targets file (without header, without file name ending)')
     
     # logging results
@@ -51,7 +51,7 @@ def parse_args(argv):
     parser.add_argument('--seed', type=int, default=123, metavar='S', help='random seed (default: 1)')
 
     # model parameters
-    parser.add_argument('--model-class', nargs='?', default='GMVAE', choices=model_map.keys(), help='model class, choices: ' 
+    parser.add_argument('--model-class', nargs='?', default='PSMVAE_b', choices=model_map.keys(), help='model class, choices: ' 
                             + ' '.join(model_map.keys()))
     parser.add_argument('--batch-size', type=int, default=512, metavar='N', help='input batch size for training (default: 200)')
     parser.add_argument('--max-epochs', type=int, default=10, metavar='N', help='number of epochs to train (default: 1,000)')
