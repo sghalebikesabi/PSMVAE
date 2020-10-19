@@ -215,8 +215,8 @@ def save_image_reconstructions(recon_batch, X, M, qy, epoch, image_dim_0, result
     n = min(X.shape[0], 8)
     if qy != None:
         classes_train = qy.argmax(1)
-        # recon_sample_X = torch.einsum("ik, kij -> ij", [qy[:n], recon_batch['xobs'][:, :n]])
-        recon_sample_X = torch.stack([recon_batch['xobs'][classes_train[i], i, :] for i in range(n)], 0)
+        recon_sample_X = torch.einsum("ik, kij -> ij", [qy[:n], recon_batch['xobs'][:, :n]])
+        # recon_sample_X = torch.stack([recon_batch['xobs'][classes_train[i], i, :] for i in range(n)], 0)
     else:
         recon_sample_X = recon_batch['xobs'][:, :n]
 
