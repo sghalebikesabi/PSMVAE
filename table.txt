@@ -60,3 +60,5 @@ data/wine/miss_data/MCAR_uniform_frac_20_seed_0,0,PSMVAE_b,0.0885788902454097,0.
 data/wine/miss_data/MCAR_uniform_frac_20_seed_0,0,PSMVAE_b,0.0882803600240685,0.11377767301428293
 data/wine/miss_data/MCAR_uniform_frac_20_seed_0,0,PSMVAE_a,0.09112819993667601,0.12059205957100719
 data/wine/miss_data/MCAR_uniform_frac_20_seed_0,0,PSMVAE_a,0.08830756804136844,0.1219238929539249
+data/wine/miss_data/MCAR_uniform_frac_80_seed_0,0,PSMVAE_b,0.1585853552164403,0.17772285128611962
+data/wine/miss_data/MCAR_uniform_frac_80_seed_0,0,PSMVAE_b,0.15910796318990267,0.17753926255266791

@@ -39,8 +39,8 @@ def parse_args():
     parser.add_argument('--seed', type=int, default=0, help='random seed (default: 1)')
     
     # robustness study
-    parser.add_argument('--n', type=float, default=None, help='number of observations')
-    parser.add_argument('--m', type=float, default=None, help='number of features')
+    parser.add_argument('--n', type=int, default=None, help='number of observations')
+    parser.add_argument('--m', type=int, default=None, help='number of features')
 
     args = parser.parse_args()
     args.uniform = True
