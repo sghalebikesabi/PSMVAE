@@ -73,7 +73,7 @@ def parse_args(argv):
     parser.add_argument('--post-sample', action='store_true', default=False, help='dample from MICE')
     parser.add_argument('--hint-rate', help='hint probability of GAIN', default=0.9, type=float)    
     parser.add_argument('--alpha', help='hyperparameter of GAIN', default=100, type=float)
-    parser.add_argument('--mul_imp', action='store_true', default=True, help='multiple imputation')
+    parser.add_argument('--mul_imp', action='store_true', default=False, help='multiple imputation')
 
     args = parser.parse_args()
     

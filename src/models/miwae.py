@@ -334,7 +334,7 @@ def notMiwae(compl_data_train, data_train, compl_data_test, data_test, norm_para
 
     # In[32]:
     # ---- single imputation in the MIWAE
-    def imputationRMSE(sess, Xorg, Xnan, L):
+    def imputationRMSE(sess, Xorg, Xnan, L, mul_imp):
 
         N = len(Xorg)
         
@@ -376,7 +376,7 @@ def notMiwae(compl_data_train, data_train, compl_data_test, data_test, norm_para
 
 
     # ---- single imputation in the not-MIWAE
-    def not_imputationRMSE(sess, Xorg, Xnan, L):
+    def not_imputationRMSE(sess, Xorg, Xnan, L, mul_imp):
 
         N = len(Xorg)
         
