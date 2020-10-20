@@ -36,9 +36,9 @@ def impute(model, data, args, kwargs):
         
         log_q_r_xobs_m = variational_params['qy']
 
-        imp_weights = log_p_z_given_r.sum(-1) + log_p_r.T.repeat((1, args.num_samples)) - log_q_z_given_r_xobs.sum(-1) - log_q_r_xobs_m.T.repeat((1, args.num_samples))
-        imp_weights_xobs = torch.nn.functional.softmax((imp_weights + log_p_xobs_given_z_r.sum(-1)).reshape(args.num_samples*args.r_cat_dim), 0) 
-        imp_weights_xmis = torch.nn.functional.softmax((imp_weights + log_p_xmis_given_z_r.sum(-1)).reshape(args.num_samples*args.r_cat_dim), 0) 
+        imp_weights = log_p_z_given_r.sum(-1).squeeze() + log_p_r.T.repeat((1, args.num_samples)) - log_q_z_given_r_xobs.sum(-1).squeeze() - log_q_r_xobs_m.T.repeat((1, args.num_samples)).squeeze()
+        imp_weights_xobs = torch.nn.functional.softmax((imp_weights + log_p_xobs_given_z_r.sum(-1).squeeze()).reshape(args.num_samples*args.r_cat_dim), 0) 
+        imp_weights_xmis = torch.nn.functional.softmax((imp_weights + log_p_xmis_given_z_r.sum(-1).squeeze()).reshape(args.num_samples*args.r_cat_dim), 0) 
         xobs_imputed_full[batch_idx, :] = torch.einsum('k,kj->j', imp_weights_xobs.float(), recon['xobs'].reshape(args.num_samples*args.r_cat_dim, recon['xobs'].shape[-1]))
         xmis_imputed_full[batch_idx, :] = torch.einsum('k,kj->j', imp_weights_xmis.float(), recon['xmis'].reshape(args.num_samples*args.r_cat_dim, recon['xmis'].shape[-1]))
 

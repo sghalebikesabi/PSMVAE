@@ -63,3 +63,5 @@ data/wine/miss_data/MNAR1var_notuniform_frac_20_seed_0,123,notmiwae,0.1130612540
 data/credit/miss_data/MNAR1var_uniform_frac_80_seed_0_n_5000_m_3,123,PSMVAE_b,0.06822765221384042,0.11546726198901672
 data/credit/miss_data/MNAR1var_uniform_frac_80_seed_0_n_5000_m_3,123,PSMVAE_a,0.0674303520892225,0.11508276300505889
 data/breast/miss_data/MNAR1var_uniform_frac_80_seed_0,123,mice,0.15335251025174912,0.07476986282432861
+data/breast/miss_data/MNAR1var_uniform_frac_80_seed_0,123,PSMVAE_a,0.08364523894987465,0.278308360305056
+data/breast/miss_data/MNAR1var_uniform_frac_80_seed_0,123,PSMVAE_a,0.08478372715849038,0.278308360305056

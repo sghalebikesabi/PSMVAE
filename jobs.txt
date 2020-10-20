@@ -23,6 +23,18 @@ Submitted batch job 775495
 Submitted batch job 775496
 Submitted batch job 775497
 Submitted batch job 775498
+Submitted batch job 780940
+Submitted batch job 780941
+Submitted batch job 780942
+Submitted batch job 780943
+Submitted batch job 780944
+Submitted batch job 780945
+Submitted batch job 780946
+Submitted batch job 780947
+Submitted batch job 780948
+Submitted batch job 780949
+Submitted batch job 780950
+Submitted batch job 780951
 
 ./run_m.sh 
 Submitted batch job 778266

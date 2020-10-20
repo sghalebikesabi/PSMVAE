@@ -173,6 +173,10 @@ def train_VAE(data_train_full, data_test_full, compl_data_train_full, compl_data
         if args.num_samples == 1:
             train_imputed_xobs = train_imputed_1_xobs
             train_imputed_xmis = train_imputed_1_xmis
+            train_imputed, train_imputed_1, test_imputed = {
+                'xobs': (train_imputed_xobs.cpu().numpy(), train_imputed_1_xobs.cpu().numpy(), test_imputed.cpu().numpy()),
+                'xmis': (train_imputed_xmis.cpu().numpy(), train_imputed_1_xmis.cpu().numpy(), test_imputed.cpu().numpy())
+            }[imp_name]
         else:
             if not args.mul_imp:
                 # multiple importance samples
@@ -210,11 +214,11 @@ def train_VAE(data_train_full, data_test_full, compl_data_train_full, compl_data
                 else:
                     train_imputed_xmis = torch.from_numpy(data_train_full)
                                 
-            train_imputed, train_imputed_1, test_imputed = {
-                'xobs': (train_imputed_xobs.cpu().numpy(), train_imputed_1_xobs.cpu().numpy(), test_imputed.cpu().numpy()),
-                'xmis': (train_imputed_xmis.cpu().numpy(), train_imputed_1_xmis.cpu().numpy(), test_imputed.cpu().numpy())
-            }[imp_name]
+                train_imputed, train_imputed_1, test_imputed = {
+                    'xobs': (train_imputed_xobs.cpu().numpy(), train_imputed_1_xobs.cpu().numpy(), test_imputed.cpu().numpy()),
+                    'xmis': (train_imputed_xmis.cpu().numpy(), train_imputed_1_xmis.cpu().numpy(), test_imputed.cpu().numpy())
+                }[imp_name]
 
-            train_imputed, train_imputed_1, test_imputed = [train_imputed[i] for i in range(args.num_samples)], [train_imputed_1[i] for i in range(args.num_samples)], [test_imputed[i] for i in range(args.num_samples)]
+                train_imputed, train_imputed_1, test_imputed = [train_imputed[i] for i in range(args.num_samples)], [train_imputed_1[i] for i in range(args.num_samples)], [test_imputed[i] for i in range(args.num_samples)]
 
     return(train_imputed, train_imputed_1, test_imputed)
