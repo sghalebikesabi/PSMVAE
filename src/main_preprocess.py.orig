@@ -7,12 +7,7 @@ from sklearn.preprocessing import MinMaxScaler
 import sys
 import torch
 
-<<<<<<< HEAD
-import preprocess as data 
-
-=======
 import preprocess as data
->>>>>>> 3313acc0d4ec14a171e846e41be42495c9909097
 
 miss_type_map = {
     'MCAR': data.MCAR,
@@ -35,14 +30,21 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description='Deep heterogenous latent factor modelling')
 
-    parser.add_argument('--data-file', nargs='?', default='data/breast', help='input data directory')
+    parser.add_argument('--data-file', nargs='?', default='data/credit', help='input data directory')
     parser.add_argument('--header', nargs='?', default=None, help='does data set have header')
-    parser.add_argument('--image-dim-0', type=int, default=28, help='image dim 0 (default: 29)')
     parser.add_argument('--train-pct', type=int, default=0.8, metavar='N', help='Percentage of train data set (default: 80)')
     parser.add_argument('--val-pct', type=int, default=0.1, metavar='N', help='Percentage of train data set (default: 80)')
     parser.add_argument('--miss-type', nargs='?', default='MNAR1var', choices=miss_type_map.keys(), help='missingness type to be induced')
     parser.add_argument('--miss-ratio', type=float, default=0.8, help='missingness ratio')
     parser.add_argument('--seed', type=int, default=0, help='random seed (default: 1)')
+    
+    # robustness study
+    parser.add_argument('--n', type=int, default=None, help='number of observations')
+<<<<<<< HEAD
+    parser.add_argument('--m', type=int, default=None, help='number of features')
+=======
+    parser.add_argument('--m', type=int, default=3, help='number of features')
+>>>>>>> 7247f15135d7113390d03ae10c101a9528fe9efc
 
     args = parser.parse_args()
     args.uniform = True
@@ -66,6 +68,14 @@ def main(args):
     except FileNotFoundError:
         pass
 
+    # robustness study
+    if args.n is not None:
+        miss_file_name += '_n_' + str(args.n)
+        data = data.sample(args.n, axis=0)
+    if args.m is not None:
+        miss_file_name += '_m_' + str(args.m)
+        data = data.sample(args.m, axis=1)
+
     # induce missingness
     np.random.seed(args.seed)
     induce_missingness = miss_type_map[args.miss_type]
@@ -86,11 +96,18 @@ def main(args):
     M_train.to_csv(os.path.join(args.data_file, "miss_data", miss_file_name + ".train"), header=False, index=False)
     M_val.to_csv(os.path.join(args.data_file, "miss_data", miss_file_name + ".val"), header=False, index=False)
     M_test.to_csv(os.path.join(args.data_file, "miss_data", miss_file_name + ".test"), header=False, index=False)
-    data_train.to_csv(os.path.join(args.data_file, f"data_{args.seed}.train"), header=False, index=False)
-    data_val.to_csv(os.path.join(args.data_file, f"data_{args.seed}.val"), header=False, index=False)
-    data_test.to_csv(os.path.join(args.data_file, f"data_{args.seed}.test"), header=False, index=False)
     
-    if patternsets != None:
+    data_name = f"data_{args.seed}"
+    if args.n is not None:
+        data_name += f"_n_{args.n}"
+    if args.m is not None:
+        data_name += f"_m_{args.m}"
+    data_train.to_csv(os.path.join(args.data_file, f"{data_name}.train"), header=False, index=False)
+    data_val.to_csv(os.path.join(args.data_file, f"{data_name}.val"), header=False, index=False)
+    data_test.to_csv(os.path.join(args.data_file, f"{data_name}.test"), header=False, index=False)
+
+
+    if patternsets is not None:
         patternsets_train, patternsets_val, patternsets_test = patternsets.iloc[random_permute[:train_idx]], patternsets.iloc[random_permute[train_idx:val_idx]], patternsets.iloc[random_permute[val_idx:]]  
         patternsets_train.to_csv(os.path.join(args.data_file, "miss_data", f"{miss_file_name}_patternsets.train"), header=False, index=False)
         patternsets_val.to_csv(os.path.join(args.data_file, "miss_data", f"{miss_file_name}_patternsets.val"), header=False, index=False)

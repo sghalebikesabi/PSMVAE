@@ -11,7 +11,7 @@ do
             for miss_ratio in 0.20 
             do
                 input=credit
-                python src/main_preprocess.py --m "${m}" --miss-ratio "${miss_ratio}" --data-file "data/${input}" --miss-type "${miss}" --seed "${seed}" 
+                python src/main_preprocess.py --m "${m}" --n 5000 --miss-ratio "${miss_ratio}" --data-file "data/${input}" --miss-type "${miss}" --seed "${seed}" 
             done
         done
     done

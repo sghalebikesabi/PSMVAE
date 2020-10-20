@@ -18,7 +18,7 @@ import keras
 import matplotlib.pyplot as plt
 import pandas as pd
 import time
-from loss_funcs import rmse_loss
+from utils import rmse_loss
 
 
 import os

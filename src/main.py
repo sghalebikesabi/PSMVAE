@@ -47,7 +47,7 @@ def parse_args(argv):
     parser.add_argument('--results-dir', nargs='?', default='logs', help='logs directory')
     parser.add_argument('--wandb-run-name', nargs='?', default='test', help='Name for wandb Run')
     parser.add_argument('--wandb-tag', nargs='?', default='test', help='Tag for wandb Run')
-    parser.add_argument('--log-interval', type=int, default=1, metavar='N', help='how many epochs to wait before logging training status')
+    parser.add_argument('--log-interval', type=int, default=1000, metavar='N', help='how many epochs to wait before logging training status')
     parser.add_argument('--seed', type=int, default=123, metavar='S', help='random seed (default: 1)')
 
     # model parameters
@@ -83,9 +83,9 @@ def parse_args(argv):
         model_map['gain'] = gain.gain
 
     if 'miwae' in args.model_class:
-        from models import notmiwae
-        model_map['miwae'] = notmiwae.model
-        model_map['notmiwae'] = notmiwae.model
+        from models import miwae
+        model_map['miwae'] = miwae.notMiwae
+        model_map['notmiwae'] = miwae.notMiwae
         args.z_dim = 1
 
     if 'IPTW' in args.model_class:
@@ -95,6 +95,10 @@ def parse_args(argv):
         args.miss_mask_training = True
     elif ('PSMVAEwoM' == args.model_class):
         args.miss_mask_training = False
+
+
+    if args.model_class == 'mice':
+        args.num_samples = 1
 
     return(args)
 
@@ -147,7 +151,7 @@ def main(args):
         test_imputed = np.zeros_like(data_test)
         for l in range(args.num_samples):
             if args.model_class == 'mice':
-                imputer = model_map[args.model_class](random_state=args.seed*l+l, max_iter=10, estimator=BayesianRidge(), sample_posterior=(args.no_post_sample==False)) 
+                imputer = model_map[args.model_class](random_state=args.seed*l+l, max_iter=10, estimator=BayesianRidge(), sample_posterior=args.post_sample) 
             elif args.model_class == 'missForest':
                 imputer = model_map[args.model_class](random_state=args.seed*l+l, max_iter=10, estimator=ExtraTreesRegressor(n_estimators=10, n_jobs=2)) 
             train_imputed += imputer.fit_transform(data_train)
@@ -173,7 +177,7 @@ def main(args):
             test_imputed = np.mean(test_imputed, axis=0)            
         if 'VAE' in args.model_class:
             train_imputed, train_imputed_1, test_imputed = model_map[args.model_class](data_train, data_test, compl_data_train, compl_data_test, wandb, args, norm_parameters)
-        elif args.model_class == 'miwae':
+        elif (args.model_class == 'miwae') or (args.model_class == 'notmiwae'):
             train_imputed, test_imputed = model_map[args.model_class](compl_data_train, data_train, compl_data_test, compl_data_test, norm_parameters, wandb, args)
 
     # compute losses
