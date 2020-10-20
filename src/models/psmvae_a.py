@@ -105,7 +105,7 @@ class Model(torch.nn.Module):
 
         # p(x|z, y) 
         if test_mode:
-            hz = F.relu(self.fc_z_h(torch.cat([z, y.repeat((L, 1))], 1)))
+            hz = F.relu(self.fc_z_h(torch.cat([z, y.repeat((L, 1, 1))], 1)))
         else:
             hz = F.relu(self.fc_z_h(torch.cat([z, y], 1)))
         h2 = F.relu(self.fc_hz_h(hz))

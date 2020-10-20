@@ -145,15 +145,12 @@ def train_VAE(data_train_full, data_test_full, compl_data_train_full, compl_data
                     wandb.log({k: v.cpu().detach().numpy() for k, v in loss_dict.items()})
 
     model.eval()
-    
     with torch.no_grad():
         compl_data_train_full_renorm = renormalization(compl_data_train_full.copy(), norm_parameters)
-
         if args.model_class == 'PSMVAE_a' or args.model_class == 'PSMVAE_b':
             imp_name = 'xmis'
         else:
             imp_name = 'xobs'
-
         # single importance sample
         M_sim_miss_train_full = np.isnan(data_train_full) & ~np.isnan(compl_data_train_full)
         data_train_filled_full = torch.from_numpy(np.nan_to_num(data_train_full.copy(), 0)).to(args.device).float()
@@ -172,30 +169,52 @@ def train_VAE(data_train_full, data_test_full, compl_data_train_full, compl_data
             train_imputed_1_xmis = torch.einsum("ik,kij->ij", [variational_params_train['qy'], recon_train['xmis']]) 
         else:
             train_imputed_1_xmis = torch.from_numpy(data_train_full)
-        
+            
         if args.num_samples == 1:
             train_imputed_xobs = train_imputed_1_xobs
             train_imputed_xmis = train_imputed_1_xmis
         else:
-            # multiple importance samples
-            train_imputed_xobs, train_imputed_xmis = impute(model, data_train_full, args, kwargs) 
+            if not args.mul_imp:
+                # multiple importance samples
+                train_imputed_xobs, train_imputed_xmis = impute(model, data_train_full, args, kwargs) 
 
-        train_imputed_xobs_ = renormalization(train_imputed_xobs.cpu(), norm_parameters)
-        train_imputed_xobs_ = rounding(train_imputed_xobs_, compl_data_train_full_renorm)
-        train_xobs_mis_mse = rmse_loss(train_imputed_xobs_.cpu().numpy(), compl_data_train_full_renorm, M_sim_miss_train_full)
-        
-        if recon_train['xmis'] != None:
-            train_imputed_xmis_ = renormalization(train_imputed_xmis.cpu(), norm_parameters)
-            train_imputed_xmis_ = rounding(train_imputed_xmis_, compl_data_train_full_renorm)
-            train_xmis_mis_mse = rmse_loss(train_imputed_xmis_.cpu().numpy(), compl_data_train_full_renorm, M_sim_miss_train_full)
-        else:
-            train_xmis_mis_mse = None
+                train_imputed_xobs_ = renormalization(train_imputed_xobs.cpu(), norm_parameters)
+                train_imputed_xobs_ = rounding(train_imputed_xobs_, compl_data_train_full_renorm)
+                train_xobs_mis_mse = rmse_loss(train_imputed_xobs_.cpu().numpy(), compl_data_train_full_renorm, M_sim_miss_train_full)
+                
+                if recon_train['xmis'] != None:
+                    train_imputed_xmis_ = renormalization(train_imputed_xmis.cpu(), norm_parameters)
+                    train_imputed_xmis_ = rounding(train_imputed_xmis_, compl_data_train_full_renorm)
+                    train_xmis_mis_mse = rmse_loss(train_imputed_xmis_.cpu().numpy(), compl_data_train_full_renorm, M_sim_miss_train_full)
+                else:
+                    train_xmis_mis_mse = None
 
-        wandb.log({'xobs imp rmse': train_xobs_mis_mse, 'xmis imp rmse': train_xmis_mis_mse,})
+                wandb.log({'xobs imp rmse': train_xobs_mis_mse, 'xmis imp rmse': train_xmis_mis_mse,})
 
-    train_imputed, train_imputed_1, test_imputed = {
-        'xobs': (train_imputed_xobs.cpu().numpy(), train_imputed_1_xobs.cpu().numpy(), test_imputed.cpu().numpy()),
-        'xmis': (train_imputed_xmis.cpu().numpy(), train_imputed_1_xmis.cpu().numpy(), test_imputed.cpu().numpy())
-    }[imp_name]
+                train_imputed, train_imputed_1, test_imputed = {
+                    'xobs': (train_imputed_xobs.cpu().numpy(), train_imputed_1_xobs.cpu().numpy(), test_imputed.cpu().numpy()),
+                    'xmis': (train_imputed_xmis.cpu().numpy(), train_imputed_1_xmis.cpu().numpy(), test_imputed.cpu().numpy())
+                }[imp_name]
+            else:
+                recon_train, variational_params_train, latent_samples_train = model(data_train_filled_full, torch.tensor(M_sim_miss_train_full).to(args.device), test_mode=True, L=args.num_samples)
+                recon_test, variational_params_test, latent_samples_test = model(data_test_filled_full, torch.tensor(M_sim_miss_test_full).to(args.device), test_mode=True, L=args.num_samples)
+                if variational_params_train['qy'] == None:
+                    recon_train['xobs'] = recon_train['xobs'].repeat((1,1,1))
+                    variational_params_train['qy'] = torch.ones((data_train_full.shape[0], 1))
+                    recon_test['xobs'] = recon_test['xobs'].repeat((1,1,1))
+                    variational_params_test['qy'] = torch.ones((data_test_full.shape[0], 1))
+                train_imputed_xobs = torch.einsum("ik,klij->lij", [variational_params_train['qy'], recon_train['xobs']]) 
+                test_imputed = torch.einsum("ik,klij->lij", [variational_params_test['qy'], recon_test[imp_name]])
+                if recon_train['xmis'] != None:
+                    train_imputed_xmis = torch.einsum("ik,kij->ij", [variational_params_train['qy'], recon_train['xmis']]) 
+                else:
+                    train_imputed_xmis = torch.from_numpy(data_train_full)
+                                
+            train_imputed, train_imputed_1, test_imputed = {
+                'xobs': (train_imputed_xobs.cpu().numpy(), train_imputed_1_xobs.cpu().numpy(), test_imputed.cpu().numpy()),
+                'xmis': (train_imputed_xmis.cpu().numpy(), train_imputed_1_xmis.cpu().numpy(), test_imputed.cpu().numpy())
+            }[imp_name]
+
+            train_imputed, train_imputed_1, test_imputed = [train_imputed[i] for i in range(args.num_samples)], [train_imputed_1[i] for i in range(args.num_samples)], [test_imputed[i] for i in range(args.num_samples)]
 
     return(train_imputed, train_imputed_1, test_imputed)
