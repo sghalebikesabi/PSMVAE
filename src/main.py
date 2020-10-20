@@ -7,7 +7,7 @@ import torch
 import torch.utils.data
 import wandb
 
-from utils import make_deterministic
+from utils import make_deterministic, save_image_reconstructions
 from utils import rounding, renormalization, normalization, rmse_loss
 
 from train import train_VAE
@@ -54,7 +54,7 @@ def parse_args(argv):
     parser.add_argument('--model-class', nargs='?', default='PSMVAE_b', choices=model_map.keys(), help='model class, choices: ' 
                             + ' '.join(model_map.keys()))
     parser.add_argument('--batch-size', type=int, default=512, metavar='N', help='input batch size for training (default: 200)')
-    parser.add_argument('--max-epochs', type=int, default=10, metavar='N', help='number of epochs to train (default: 1,000)')
+    parser.add_argument('--max-epochs', type=int, default=5, metavar='N', help='number of epochs to train (default: 1,000)')
     parser.add_argument('--learning-rate', type=float, default=1e-3, metavar='N', help='learning rate of Adam optimizer')
     parser.add_argument('--weight-decay', type=float, default=0)
     parser.add_argument('--miss-mask-training', action='store_true', default=False,
@@ -88,6 +88,7 @@ def parse_args(argv):
         model_map['miwae'] = notmiwae.model
         model_map['notmiwae'] = notmiwae.model
         args.z_dim = 1
+        args.num_samples_train = 50
 
     if 'IPTW' in args.model_class:
         args.iptw = True
@@ -184,6 +185,9 @@ def main(args):
         elif args.model_class == 'miwae':
             train_imputed, test_imputed = model_map[args.model_class](compl_data_train, data_train, compl_data_test, compl_data_test, norm_parameters, wandb, args)
 
+    if args.mnist:
+        save_image_reconstructions(train_imputed*M_sim_miss_train+compl_data_train*(1-M_sim_miss_train), compl_data_train, M_sim_miss_train, 28, 'images', args.model_class + "_" + args.miss_data_file.split('/')[-1].split('_')[0])
+    
     # compute losses
     M_obs_train, M_obs_test = ~M_sim_miss_train & ~np.isnan(compl_data_train), ~M_sim_miss_test & ~np.isnan(compl_data_test)
 

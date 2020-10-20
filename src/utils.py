@@ -209,7 +209,21 @@ def renormalization (norm_data, norm_parameters, norm_type='standard'):
   return renorm_data
 
 
-def save_image_reconstructions(recon_batch, X, M, qy, epoch, image_dim_0, results_path, tag):
+def save_image_reconstructions(imputed, X, M, image_dim_0, results_path, tag):
+    # sample images 
+    input_dim = X.shape[1]
+    n = min(X.shape[0], 8)
+    recon_sample_X = imputed[M.sum(1)>0][:n]
+    sample_X = X[M.sum(1)>0][:n]
+    sample_M = M[M.sum(1)>0][:n]
+    #induce red missingness
+    sample_X_with_red_miss, _ = induce_red_missingness(sample_X, sample_M, image_dim_0)
+    RGB_sample_image = np.repeat(np.reshape(recon_sample_X, (recon_sample_X.shape[0], 1, image_dim_0, -1)), repeats = [3], axis=1)
+    comparison = torch.cat([sample_X_with_red_miss.float(), torch.from_numpy(RGB_sample_image)])
+    save_image(comparison.cpu(), results_path + '/reconstruction_' + str(tag) + '.png', nrow=n)
+
+
+def save_image_reconstructions_with_mask(recon_batch, X, M, qy, epoch, image_dim_0, results_path, tag):
     # sample images 
     input_dim = X.shape[1]
     n = min(X.shape[0], 8)
@@ -264,7 +278,8 @@ def induce_red_missingness(sample_X, sample_M, image_dim_0):
     for i in range(reshaped_sample_X.shape[0]):
         for j in range(reshaped_sample_X.shape[2]):
             for k in range(reshaped_sample_X.shape[3]):
-                if RGB_sample_M[i,0,j,k]:
-                    RGB_sample_image_with_red_miss[i,:,j,k] = [255, 0, 0]
+                # if RGB_sample_M[i,0,j,k]:
+                    RGB_sample_image_with_red_miss[i,:,j,k] = [255*RGB_sample_M[i,0,j,k], 0, 0]
+                    # RGB_sample_image_with_red_miss[i,:,j,k] = [255, 0, 0]
 
     return(torch.tensor(RGB_sample_image_with_red_miss), torch.tensor(RGB_sample_image))

@@ -15,6 +15,7 @@ class Model(torch.nn.Module):
         self.r_cat_dim = model_params_dict.r_cat_dim
         self.z_dim = model_params_dict.z_dim
         self.h_dim = model_params_dict.h_dim
+        self.mnist = model_params_dict.mnist
 
         # q(y|x) y:= r
         self.fc_xobs_h = torch.nn.Linear(self.input_dim_wm, self.h_dim)
@@ -110,6 +111,9 @@ class Model(torch.nn.Module):
             hz = F.relu(self.fc_z_h(torch.cat([z, y], 1)))
         h2 = F.relu(self.fc_hz_h(hz))
         x = self.fc_h_xm(h2)
+
+        if self.mnist:
+            x[:,:self.input_dim*2] = torch.sigmoid(x[:,:self.input_dim*2])
 
         m_input = x[:,:self.input_dim] * (1-m.float()) + x[:,self.input_dim:self.input_dim*2] * m
 

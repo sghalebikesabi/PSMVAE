@@ -5,7 +5,7 @@ from torch import optim
 from torchvision import datasets, transforms
 from tqdm import tqdm
 
-from utils import rmse_loss, log_normal, normal_KLD, impute, init_weights, renormalization, rounding, save_image_reconstructions
+from utils import rmse_loss, log_normal, normal_KLD, impute, init_weights, renormalization, rounding, save_image_reconstructions_with_mask
 from models import vae, gmvae, psmvae_a, psmvae_b
 
 model_map = {
@@ -100,6 +100,8 @@ def train_VAE(data_train_full, data_test_full, compl_data_train_full, compl_data
     args.device = torch.device("cuda" if args.cuda else "cpu")
     kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
+    M_sim_miss_train_full = np.isnan(data_train_full) & ~np.isnan(compl_data_train_full)
+    data_train_filled_full = torch.from_numpy(np.nan_to_num(data_train_full.copy(), 0)).to(args.device).float()
     train_loader = DataLoader(TensorDataset(torch.from_numpy(data_train_full), torch.from_numpy(compl_data_train_full)), batch_size=args.batch_size, shuffle=True, **kwargs)
     test_loader = DataLoader(TensorDataset(torch.from_numpy(data_test_full), torch.from_numpy(compl_data_test_full)), batch_size=args.batch_size, shuffle=True, **kwargs)
 
@@ -125,7 +127,8 @@ def train_VAE(data_train_full, data_test_full, compl_data_train_full, compl_data
 
         if epoch % args.log_interval == 0:
             if args.mnist:  
-                save_image_reconstructions(recon, compl_data, M_miss, variational_params['qy'], epoch, 28, 'images', 'test')
+                recon, variational_params, latent_samples = model(data_train_filled_full[:8], torch.from_numpy(M_sim_miss_train_full[:8]))
+                save_image_reconstructions_with_mask(recon, compl_data_train_full[:8], M_sim_miss_train_full[:8], variational_params['qy'], epoch, 28, 'images', args.model_class)
             wandb.log({k: v.cpu().detach().numpy() for k, v in loss_dict.items()})
             model.eval()
             with torch.no_grad():
@@ -153,8 +156,6 @@ def train_VAE(data_train_full, data_test_full, compl_data_train_full, compl_data
             imp_name = 'xobs'
 
         # single importance sample
-        M_sim_miss_train_full = np.isnan(data_train_full) & ~np.isnan(compl_data_train_full)
-        data_train_filled_full = torch.from_numpy(np.nan_to_num(data_train_full.copy(), 0)).to(args.device).float()
         recon_train, variational_params_train, latent_samples_train = model(data_train_filled_full, torch.tensor(M_sim_miss_train_full).to(args.device))
         data_test_filled_full = torch.from_numpy(np.nan_to_num(data_test_full.copy(), 0)).to(args.device).float()
         M_sim_miss_test_full = np.isnan(data_test_full) & ~np.isnan(compl_data_test_full)

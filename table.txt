@@ -61,3 +61,7 @@ data/MNIST/miss_data/MNAR1var_uniform_frac_20_seed_0,123,VAE,0.325234427864507,0
 data/MNIST/miss_data/MNAR1var_uniform_frac_20_seed_0,123,VAE,0.3493408213718729,0.3316675418275493
 data/MNIST/miss_data/MNAR1var_uniform_frac_20_seed_0,123,VAE,0.38123346533421204,0.36447926929750163
 data/MNIST/miss_data/MNAR1var_uniform_frac_20_seed_0,123,VAE,0.38123346533421204,0.36447926929750163
+data/MNIST/miss_data/label_uniform_frac_20_seed_0,123,gain,0.5096626277925498,0.5077660350655187
+data/MNIST/miss_data/label_uniform_frac_20_seed_0,123,gain,0.4768229671833541,0.4750661183293403
+data/MNIST/miss_data/label_uniform_frac_20_seed_0,123,PSMVAE_a,0.9375231854025871,0.9383709971719697
+data/MNIST/miss_data/label_uniform_frac_20_seed_0,123,PSMVAE_b,0.2692289448961133,0.26898681711804745
