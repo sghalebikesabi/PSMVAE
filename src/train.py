@@ -199,14 +199,14 @@ def train_VAE(data_train_full, data_test_full, compl_data_train_full, compl_data
                 recon_train, variational_params_train, latent_samples_train = model(data_train_filled_full, torch.tensor(M_sim_miss_train_full).to(args.device), test_mode=True, L=args.num_samples)
                 recon_test, variational_params_test, latent_samples_test = model(data_test_filled_full, torch.tensor(M_sim_miss_test_full).to(args.device), test_mode=True, L=args.num_samples)
                 if variational_params_train['qy'] == None:
-                    recon_train['xobs'] = recon_train['xobs'].repeat((1,1,1))
+                    recon_train['xobs'] = recon_train['xobs'].repeat((1,1,1,1))
                     variational_params_train['qy'] = torch.ones((data_train_full.shape[0], 1))
-                    recon_test['xobs'] = recon_test['xobs'].repeat((1,1,1))
+                    recon_test['xobs'] = recon_test['xobs'].repeat((1,1,1,1))
                     variational_params_test['qy'] = torch.ones((data_test_full.shape[0], 1))
                 train_imputed_xobs = torch.einsum("ik,klij->lij", [variational_params_train['qy'], recon_train['xobs']]) 
                 test_imputed = torch.einsum("ik,klij->lij", [variational_params_test['qy'], recon_test[imp_name]])
                 if recon_train['xmis'] != None:
-                    train_imputed_xmis = torch.einsum("ik,kij->ij", [variational_params_train['qy'], recon_train['xmis']]) 
+                    train_imputed_xmis = torch.einsum("ik,klij->lij", [variational_params_train['qy'], recon_train['xmis']]) 
                 else:
                     train_imputed_xmis = torch.from_numpy(data_train_full)
                                 
