@@ -67,7 +67,7 @@ def loss(recon, variational_params, latent_samples, data, compl_data, M_obs, M_m
         kld_xmis = torch.tensor([0]).to(data.device)
         mse_xmis = torch.tensor([0]).to(data.device)
         log_xmis_prior = torch.tensor([0]).to(data.device)
-        recon_data_xmis = compl_data
+        # recon_data_xmis = compl_data
 
     if variational_params['qy'] is not None:
         nent_r = variational_params['qy'] * torch.nn.LogSoftmax(1)(variational_params['qy_logit'])
@@ -77,7 +77,7 @@ def loss(recon, variational_params, latent_samples, data, compl_data, M_obs, M_m
         mse_data = (variational_params['qy'].repeat((L,1)).T * mse_data).sum(0).mean()
         mse_mask = (variational_params['qy'].repeat((L,1)).T * mse_mask).sum(0).mean()
 
-        recon_data_xobs = torch.einsum('ir, rij -> ij', [variational_params['qy'], recon_data_xobs])
+        # recon_data_xobs = torch.einsum('ir, rij -> ij', [variational_params['qy'], recon_data_xobs])
     else:
         kld_r = torch.tensor(0).to(data.device).float()
         mse_data = mse_data.mean()
@@ -92,8 +92,8 @@ def loss(recon, variational_params, latent_samples, data, compl_data, M_obs, M_m
         mode + ' r KLD':  kld_r,
         mode + ' miss mask MSE': mse_mask,
         mode + ' xobs MSE': mse_data,
-        mode + ' xobs Imputation RMSE': torch.tensor(rmse_loss(recon_data_xobs.detach().cpu().numpy(), compl_data.cpu().numpy(), M_miss.cpu().numpy(), True)).to(data.device),
-        mode + ' xmis Imputation RMSE': torch.tensor(rmse_loss(recon_data_xmis.detach().cpu().numpy(), compl_data.cpu().numpy(), M_miss.cpu().numpy(), True)).to(data.device),
+        # mode + ' xobs Imputation RMSE': torch.tensor(rmse_loss(recon_data_xobs.detach().cpu().numpy(), compl_data.cpu().numpy(), M_miss.cpu().numpy(), True)).to(data.device),
+        # mode + ' xmis Imputation RMSE': torch.tensor(rmse_loss(recon_data_xmis.detach().cpu().numpy(), compl_data.cpu().numpy(), M_miss.cpu().numpy(), True)).to(data.device),
     }
 
     return loss_dict
@@ -145,15 +145,12 @@ def train_VAE(data_train_full, data_test_full, compl_data_train_full, compl_data
                     wandb.log({k: v.cpu().detach().numpy() for k, v in loss_dict.items()})
 
     model.eval()
-    
     with torch.no_grad():
         compl_data_train_full_renorm = renormalization(compl_data_train_full.copy(), norm_parameters)
-
         if args.model_class == 'PSMVAE_a' or args.model_class == 'PSMVAE_b':
             imp_name = 'xmis'
         else:
             imp_name = 'xobs'
-
         # single importance sample
         M_sim_miss_train_full = np.isnan(data_train_full) & ~np.isnan(compl_data_train_full)
         data_train_filled_full = torch.from_numpy(np.nan_to_num(data_train_full.copy(), 0)).to(args.device).float()
@@ -172,30 +169,56 @@ def train_VAE(data_train_full, data_test_full, compl_data_train_full, compl_data
             train_imputed_1_xmis = torch.einsum("ik,kij->ij", [variational_params_train['qy'], recon_train['xmis']]) 
         else:
             train_imputed_1_xmis = torch.from_numpy(data_train_full)
-        
+            
         if args.num_samples == 1:
             train_imputed_xobs = train_imputed_1_xobs
             train_imputed_xmis = train_imputed_1_xmis
+            train_imputed, train_imputed_1, test_imputed = {
+                'xobs': (train_imputed_xobs.cpu().numpy(), train_imputed_1_xobs.cpu().numpy(), test_imputed.cpu().numpy()),
+                'xmis': (train_imputed_xmis.cpu().numpy(), train_imputed_1_xmis.cpu().numpy(), test_imputed.cpu().numpy())
+            }[imp_name]
         else:
-            # multiple importance samples
-            train_imputed_xobs, train_imputed_xmis = impute(model, data_train_full, args, kwargs) 
+            if not args.mul_imp:
+                # multiple importance samples
+                train_imputed_xobs, train_imputed_xmis = impute(model, data_train_full, args, kwargs) 
 
-        train_imputed_xobs_ = renormalization(train_imputed_xobs.cpu(), norm_parameters)
-        train_imputed_xobs_ = rounding(train_imputed_xobs_, compl_data_train_full_renorm)
-        train_xobs_mis_mse = rmse_loss(train_imputed_xobs_.cpu().numpy(), compl_data_train_full_renorm, M_sim_miss_train_full)
-        
-        if recon_train['xmis'] != None:
-            train_imputed_xmis_ = renormalization(train_imputed_xmis.cpu(), norm_parameters)
-            train_imputed_xmis_ = rounding(train_imputed_xmis_, compl_data_train_full_renorm)
-            train_xmis_mis_mse = rmse_loss(train_imputed_xmis_.cpu().numpy(), compl_data_train_full_renorm, M_sim_miss_train_full)
-        else:
-            train_xmis_mis_mse = None
+                train_imputed_xobs_ = renormalization(train_imputed_xobs.cpu(), norm_parameters)
+                train_imputed_xobs_ = rounding(train_imputed_xobs_, compl_data_train_full_renorm)
+                train_xobs_mis_mse = rmse_loss(train_imputed_xobs_.cpu().numpy(), compl_data_train_full_renorm, M_sim_miss_train_full)
+                
+                if recon_train['xmis'] != None:
+                    train_imputed_xmis_ = renormalization(train_imputed_xmis.cpu(), norm_parameters)
+                    train_imputed_xmis_ = rounding(train_imputed_xmis_, compl_data_train_full_renorm)
+                    train_xmis_mis_mse = rmse_loss(train_imputed_xmis_.cpu().numpy(), compl_data_train_full_renorm, M_sim_miss_train_full)
+                else:
+                    train_xmis_mis_mse = None
 
-        wandb.log({'xobs imp rmse': train_xobs_mis_mse, 'xmis imp rmse': train_xmis_mis_mse,})
+                wandb.log({'xobs imp rmse': train_xobs_mis_mse, 'xmis imp rmse': train_xmis_mis_mse,})
 
-    train_imputed, train_imputed_1, test_imputed = {
-        'xobs': (train_imputed_xobs.cpu().numpy(), train_imputed_1_xobs.cpu().numpy(), test_imputed.cpu().numpy()),
-        'xmis': (train_imputed_xmis.cpu().numpy(), train_imputed_1_xmis.cpu().numpy(), test_imputed.cpu().numpy())
-    }[imp_name]
+                train_imputed, train_imputed_1, test_imputed = {
+                    'xobs': (train_imputed_xobs.cpu().numpy(), train_imputed_1_xobs.cpu().numpy(), test_imputed.cpu().numpy()),
+                    'xmis': (train_imputed_xmis.cpu().numpy(), train_imputed_1_xmis.cpu().numpy(), test_imputed.cpu().numpy())
+                }[imp_name]
+            else:
+                recon_train, variational_params_train, latent_samples_train = model(data_train_filled_full, torch.tensor(M_sim_miss_train_full).to(args.device), test_mode=True, L=args.num_samples)
+                recon_test, variational_params_test, latent_samples_test = model(data_test_filled_full, torch.tensor(M_sim_miss_test_full).to(args.device), test_mode=True, L=args.num_samples)
+                if variational_params_train['qy'] == None:
+                    recon_train['xobs'] = recon_train['xobs'].repeat((1,1,1,1))
+                    variational_params_train['qy'] = torch.ones((data_train_full.shape[0], 1))
+                    recon_test['xobs'] = recon_test['xobs'].repeat((1,1,1,1))
+                    variational_params_test['qy'] = torch.ones((data_test_full.shape[0], 1))
+                train_imputed_xobs = torch.einsum("ik,klij->lij", [variational_params_train['qy'], recon_train['xobs']]) 
+                test_imputed = torch.einsum("ik,klij->lij", [variational_params_test['qy'], recon_test[imp_name]])
+                if recon_train['xmis'] != None:
+                    train_imputed_xmis = torch.einsum("ik,klij->lij", [variational_params_train['qy'], recon_train['xmis']]) 
+                else:
+                    train_imputed_xmis = torch.from_numpy(data_train_full)
+                                
+                train_imputed, train_imputed_1, test_imputed = {
+                    'xobs': (train_imputed_xobs.cpu().numpy(), train_imputed_1_xobs.cpu().numpy(), test_imputed.cpu().numpy()),
+                    'xmis': (train_imputed_xmis.cpu().numpy(), train_imputed_1_xmis.cpu().numpy(), test_imputed.cpu().numpy())
+                }[imp_name]
+
+                train_imputed, train_imputed_1, test_imputed = [train_imputed[i] for i in range(args.num_samples)], [train_imputed_1[i] for i in range(args.num_samples)], [test_imputed[i] for i in range(args.num_samples)]
 
     return(train_imputed, train_imputed_1, test_imputed)

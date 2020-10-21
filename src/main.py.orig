@@ -73,7 +73,7 @@ def parse_args(argv):
     parser.add_argument('--post-sample', action='store_true', default=False, help='dample from MICE')
     parser.add_argument('--hint-rate', help='hint probability of GAIN', default=0.9, type=float)    
     parser.add_argument('--alpha', help='hyperparameter of GAIN', default=100, type=float)
-    parser.add_argument('--mul-imp', action='store_true', default=False, help='multiple imputation')
+    parser.add_argument('--mul_imp', action='store_true', default=True, help='multiple imputation')
 
     args = parser.parse_args()
     
@@ -98,6 +98,12 @@ def parse_args(argv):
     elif ('PSMVAEwoM' == args.model_class):
         args.miss_mask_training = False
 
+<<<<<<< HEAD
+
+    if args.model_class == 'mice':
+        args.num_samples = 1
+
+=======
     if (args.model_class == 'mice') and not args.mul_imp: #TODO
         args.num_samples = 1
 
@@ -107,6 +113,7 @@ def parse_args(argv):
     if args.cuda:
         args.log_interval = 1000
 
+>>>>>>> 6a8d44eae8e0e59e7b3cbcd2e21b0adb8a7c277a
     return(args)
 
 

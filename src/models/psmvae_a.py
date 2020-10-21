@@ -27,9 +27,6 @@ class Model(torch.nn.Module):
         self.fc_hxobsy_h = torch.nn.Linear(self.h_dim, self.h_dim)
         self.fc_h_xmis = torch.nn.Linear(self.h_dim, self.input_dim*2)
 
-        # p(xmis|y) 
-        # self.fc_y_xmis = torch.nn.Linear(self.r_cat_dim, self.input_dim)
-
         # q(z|x, y) 
         self.fc_xy_h = torch.nn.Linear(self.input_dim_wm + self.r_cat_dim, self.h_dim)
         self.fc_hxy_h = torch.nn.Linear(self.h_dim, self.h_dim)
@@ -59,12 +56,12 @@ class Model(torch.nn.Module):
 
     def qxmis_graph(self, xm, z, y, test_mode, L=1):
         # q(x|z, y, x)
-        xobsy = torch.cat([xm, z, y], 1)
+        xobsy = torch.cat([xm, z, y], -1)
 
         hxobsy = F.relu(self.fc_xobsy_h(xobsy))
         hobs = F.relu(self.fc_hxobsy_h(hxobsy))
         xmis_post = self.fc_h_xmis(hobs)
-        xmis_mu_post, xmis_logvar_post = torch.split(xmis_post, self.input_dim, dim=1) 
+        xmis_mu_post, xmis_logvar_post = torch.split(xmis_post, self.input_dim, dim=-1) 
         xmis_std_post = torch.sqrt(torch.exp(torch.clamp(xmis_logvar_post, -15, 15)))
 
         eps = torch.randn_like(xmis_std_post).to(xm.device)
@@ -88,39 +85,35 @@ class Model(torch.nn.Module):
             eps = torch.randn_like(z_std_post).to(xm.device)
         z = z_mu_post + eps*z_std_post
 
-        if test_mode:
-            z = z.reshape((L*z_mu_post.shape[0], z_mu_post.shape[1]))
+        # if test_mode:
+            # z = z.reshape((L*z_mu_post.shape[0], z_mu_post.shape[1]))
 
         return z, z_mu_post, torch.clamp(z_logvar_post, -15, 15)
 
     def decoder(self, z, y, m, i, test_mode, L=1):
 
-        # p(xmis|y) 
-        # xmis_mu_prior = self.fc_y_xmis(y)
-        # xmis_logvar_prior = torch.zeros_like(xmis_mu_prior).to(z.device)
-
         # p(z|y)
         z_prior = self.fc_y_z(y)
-        z_mu_prior, z_logvar_prior = torch.split(z_prior, self.z_dim, dim=1) 
+        z_mu_prior, z_logvar_prior = torch.split(z_prior, self.z_dim, dim=-1) 
 
         # p(x|z, y) 
-        if test_mode:
-            hz = F.relu(self.fc_z_h(torch.cat([z, y.repeat((L, 1))], 1)))
-        else:
-            hz = F.relu(self.fc_z_h(torch.cat([z, y], 1)))
+        hz = F.relu(self.fc_z_h(torch.cat([z, y], -1)))
         h2 = F.relu(self.fc_hz_h(hz))
         x = self.fc_h_xm(h2)
 
-        m_input = x[:,:self.input_dim] * (1-m.float()) + x[:,self.input_dim:self.input_dim*2] * m
+        m_input = x[...,:self.input_dim] * (1-m.float()) + x[...,self.input_dim:self.input_dim*2] * m
+        if test_mode:
+            m_output = torch.sigmoid(torch.einsum("lij, jk -> lij", [m_input, torch.nn.functional.softplus(self.W[i])]) + self.b[i])
+        else:
+            m_output = torch.sigmoid(torch.einsum("ij, jk -> ij", [m_input, torch.nn.functional.softplus(self.W[i])]) + self.b[i])
 
         recon = {
-            'xobs': x[:,:self.input_dim],
-            'xmis': x[:,self.input_dim:self.input_dim*2],
-            # 'M_sim_miss': torch.sigmoid(self.fc_x_m(torch.cat([x[:,:self.input_dim], x[:, self.input_dim:self.input_dim*2], y.repeat((L, 1))], 1))),
-            'M_sim_miss': torch.sigmoid(torch.einsum("ij, jk -> ij", [m_input, torch.nn.functional.softplus(self.W[i])]) + self.b[i]),
+            'xobs': x[...,:self.input_dim],
+            'xmis': x[...,self.input_dim:self.input_dim*2],
+            'M_sim_miss': m_output,
         }
                 
-        return z_mu_prior, torch.clamp(z_logvar_prior, -15, 15), recon #xmis_mu_prior, torch.clamp(xmis_logvar_prior, -15, 15), 
+        return z_mu_prior, torch.clamp(z_logvar_prior, -15, 15), recon 
 
     def forward(self, x, m, test_mode=False, L=1):
         if self.m:
@@ -137,11 +130,11 @@ class Model(torch.nn.Module):
             if not test_mode:
                 z[i], zm[i], zv[i] = self.qz_graph(xm, y, test_mode, L)
                 xmis[i], xmis_mu[i], xmis_logvar[i] = self.qxmis_graph(xm, z[i], y, test_mode, L)
+                zm_prior[i], zv_prior[i], recon[i] = self.decoder(z[i], y, m, i, test_mode, L)
             else:
                 z[i], zm[i], zv[i] = self.qz_graph(xm, y, test_mode, L)
-                xmis[i], xmis_mu[i], xmis_logvar[i] = self.qxmis_graph(xm.repeat((L, 1)), z[i], y.repeat((L, 1)), test_mode, L)
-            zm_prior[i], zv_prior[i], recon[i] = self.decoder(z[i], y, m, i, test_mode, L)
-            # zm_prior[i], zv_prior[i], xmis_mu_prior[i], xmis_logvar_prior[i], recon[i] = self.decoder(z[i], y, test_mode, L)
+                xmis[i], xmis_mu[i], xmis_logvar[i] = self.qxmis_graph(xm.repeat((L, 1, 1)), z[i], y.repeat((L, 1, 1)), test_mode, L)
+                zm_prior[i], zv_prior[i], recon[i] = self.decoder(z[i], y.repeat((L, 1, 1)), m, i, test_mode, L)
         
         latent_samples = {
             'z': torch.stack(z),

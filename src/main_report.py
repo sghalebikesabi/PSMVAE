@@ -6,7 +6,7 @@ import os
 
 miss_rate = '80'
 
-list_of_files = glob.glob('/home/ghalebik/Downloads/*') # * means all if need specific format then *.csv
+list_of_files = glob.glob('~/Downloads/*') # * means all if need specific format then *.csv
 latest_file = max(list_of_files, key=os.path.getctime)
 
 file_in = latest_file
