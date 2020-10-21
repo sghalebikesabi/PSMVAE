@@ -18,7 +18,6 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 import keras
-import matplotlib.pyplot as plt
 import pandas as pd
 import time
 from utils import rmse_loss

@@ -14,6 +14,7 @@ class Model(torch.nn.Module):
         self.r_cat_dim = model_params_dict.r_cat_dim
         self.z_dim = model_params_dict.z_dim
         self.h_dim = model_params_dict.h_dim
+        self.mnist = model_params_dict.mnist
 
         # q(y|x) y:= r
         self.fc_xobs_h = torch.nn.Linear(self.input_dim_wm, self.h_dim)
@@ -25,9 +26,6 @@ class Model(torch.nn.Module):
         self.fc_xobsy_h = torch.nn.Linear(self.input_dim_wm + self.z_dim + self.r_cat_dim, self.h_dim)
         self.fc_hxobsy_h = torch.nn.Linear(self.h_dim, self.h_dim)
         self.fc_h_xmis = torch.nn.Linear(self.h_dim, self.input_dim*2)
-
-        # p(xmis|y) 
-        # self.fc_y_xmis = torch.nn.Linear(self.r_cat_dim, self.input_dim)
 
         # q(z|x, y) 
         self.fc_xy_h = torch.nn.Linear(self.input_dim_wm + self.r_cat_dim, self.h_dim)
@@ -88,10 +86,6 @@ class Model(torch.nn.Module):
 
     def decoder(self, z, y, test_mode, L=1):
 
-        # p(xmis|y) 
-        # xmis_mu_prior = self.fc_y_xmis(y)
-        # xmis_logvar_prior = torch.zeros_like(xmis_mu_prior).to(z.device)
-
         # p(z|y)
         z_prior = self.fc_y_z(y)
         z_mu_prior, z_logvar_prior = torch.split(z_prior, self.z_dim, dim=-1) 
@@ -101,6 +95,9 @@ class Model(torch.nn.Module):
         h2 = F.relu(self.fc_hz_h(hz))
         x = self.fc_h_xm(h2)
 
+        if self.mnist:
+            x[:,:self.input_dim*2] = torch.sigmoid(x[:,:self.input_dim*2])
+
         recon = {
             'xobs': x[...,:self.input_dim],
             'xmis': x[...,self.input_dim:self.input_dim*2],
@@ -108,7 +105,7 @@ class Model(torch.nn.Module):
         }
         
                 
-        return z_mu_prior, torch.clamp(z_logvar_prior, -15, 15), recon #xmis_mu_prior, torch.clamp(xmis_logvar_prior, -15, 15), 
+        return z_mu_prior, torch.clamp(z_logvar_prior, -15, 15), recon  
 
     def forward(self, x, m, test_mode=False, L=1):
         if self.m:
@@ -139,8 +136,8 @@ class Model(torch.nn.Module):
         variational_params = {
             'xmis_mu': torch.stack(xmis_mu),
             'xmis_logvar': torch.stack(xmis_logvar),
-            'xmis_mu_prior': None, #torch.stack(xmis_mu_prior),
-            'xmis_logvar_prior': None, #torch.stack(xmis_logvar_prior),
+            'xmis_mu_prior': None, 
+            'xmis_logvar_prior': None, 
             'z_mu': torch.stack(zm),
             'z_logvar': torch.stack(zv), 
             'z_mu_prior': torch.stack(zm_prior), 
