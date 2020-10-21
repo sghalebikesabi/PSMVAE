@@ -65,3 +65,5 @@ data/MNIST/miss_data/label_uniform_frac_20_seed_0,123,gain,0.5096626277925498,0.
 data/MNIST/miss_data/label_uniform_frac_20_seed_0,123,gain,0.4768229671833541,0.4750661183293403
 data/MNIST/miss_data/label_uniform_frac_20_seed_0,123,PSMVAE_a,0.9375231854025871,0.9383709971719697
 data/MNIST/miss_data/label_uniform_frac_20_seed_0,123,PSMVAE_b,0.2692289448961133,0.26898681711804745
+data/MNIST/miss_data/label_uniform_frac_20_seed_0,123,PSMVAE_b,0.2614240524781646,0.2604230021626854
+data/MNIST/miss_data/label_uniform_frac_20_seed_0,123,gain,0.3922060987668871,0.3915259916080773

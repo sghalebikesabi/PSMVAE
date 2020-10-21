@@ -278,8 +278,8 @@ def induce_red_missingness(sample_X, sample_M, image_dim_0):
     for i in range(reshaped_sample_X.shape[0]):
         for j in range(reshaped_sample_X.shape[2]):
             for k in range(reshaped_sample_X.shape[3]):
-                # if RGB_sample_M[i,0,j,k]:
-                    RGB_sample_image_with_red_miss[i,:,j,k] = [255*RGB_sample_M[i,0,j,k], 0, 0]
-                    # RGB_sample_image_with_red_miss[i,:,j,k] = [255, 0, 0]
+                if RGB_sample_M[i,0,j,k]:
+                    # RGB_sample_image_with_red_miss[i,:,j,k] = [255*RGB_sample_M[i,0,j,k], 0, 0]
+                    RGB_sample_image_with_red_miss[i,:,j,k] = [255, 0, 0]
 
     return(torch.tensor(RGB_sample_image_with_red_miss), torch.tensor(RGB_sample_image))
