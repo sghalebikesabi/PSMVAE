@@ -65,3 +65,4 @@ data/credit/miss_data/MNAR1var_uniform_frac_80_seed_0_n_5000_m_3,123,PSMVAE_a,0.
 data/breast/miss_data/MNAR1var_uniform_frac_80_seed_0,123,mice,0.15335251025174912,0.07476986282432861
 data/breast/miss_data/MNAR1var_uniform_frac_80_seed_0,123,PSMVAE_a,0.08364523894987465,0.278308360305056
 data/breast/miss_data/MNAR1var_uniform_frac_80_seed_0,123,PSMVAE_a,0.08478372715849038,0.278308360305056
+data/MNIST/miss_data/label_uniform_frac_20_seed_0,123,PSMVAE_a,0.937508020344714,0.9383588056029555
