@@ -26,12 +26,12 @@ from utils import rmse_loss
 import os
 # os.environ["CUDA_VISIBLE_DEVICES"] = "6"
 
-plt.rcParams["font.family"] = "serif"
-plt.rcParams['font.size'] = 15.0
-plt.rcParams['axes.spines.right'] = False
-plt.rcParams['axes.spines.top'] = False
-plt.rcParams['savefig.format'] = 'pdf'
-plt.rcParams['lines.linewidth'] = 2.5
+#plt.rcParams["font.family"] = "serif"
+#plt.rcParams['font.size'] = 15.0
+#plt.rcParams['axes.spines.right'] = False
+#plt.rcParams['axes.spines.top'] = False
+#plt.rcParams['savefig.format'] = 'pdf'
+#plt.rcParams['lines.linewidth'] = 2.5
 
 from utils import renormalization, rounding
 
@@ -66,8 +66,13 @@ def notMiwae(compl_data_train, data_train, compl_data_test, data_test, norm_para
     n_samples = args.num_samples_train
     max_iter = int(args.max_epochs*N/args.batch_size)
     batch_size = args.batch_size
+
+    if D == 784:
+        norm_type = 'minmax'
+    else:
+        norm_type = 'standard'
     
-    compl_data_train_renorm = renormalization(compl_data_train.copy(), norm_parameters)
+    compl_data_train_renorm = renormalization(compl_data_train.copy(), norm_parameters, norm_type)
 
     # # ---- standardize data
     # data = data - np.mean(data, axis=0)
@@ -444,7 +449,7 @@ def notMiwae(compl_data_train, data_train, compl_data_test, data_test, norm_para
                 rmse, imputations_test = imputationRMSE(sess, Xval, Xnan_test, 1)
 
             # rounding
-            train_imputed = renormalization(imputations, norm_parameters)
+            train_imputed = renormalization(imputations, norm_parameters, norm_type)
             train_imputed = rounding(train_imputed, compl_data_train)
 
             train_mis_mse = rmse_loss(train_imputed, compl_data_train_renorm, np.isnan(Xnan))
