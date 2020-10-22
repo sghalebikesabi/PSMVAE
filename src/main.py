@@ -8,7 +8,7 @@ import torch
 import torch.utils.data
 import wandb
 
-from utils import make_deterministic
+from utils import make_deterministic, save_image_reconstructions
 from utils import rounding, renormalization, normalization, rmse_loss
 
 from train import train_VAE
@@ -40,9 +40,9 @@ def parse_args(argv):
     parser = argparse.ArgumentParser(description='VAEs for missingness example')
 
     # input data
-    parser.add_argument('--compl-data-file', nargs='?', default='data/breast/data_0', help='complete data file (without header, without file name ending)')
-    parser.add_argument('--miss-data-file', nargs='?', default='data/breast/miss_data/MNAR1var_uniform_frac_80_seed_0', help='missing data file (without header, without file name ending)')
-    parser.add_argument('--targets-file', nargs='?', default='data/breast/targets_0', help='targets file (without header, without file name ending)')
+    parser.add_argument('--compl-data-file', nargs='?', default='data/MNIST/data_0', help='complete data file (without header, without file name ending)')
+    parser.add_argument('--miss-data-file', nargs='?', default='data/MNIST/miss_data/label_uniform_frac_20_seed_0', help='missing data file (without header, without file name ending)')
+    parser.add_argument('--targets-file', nargs='?', default=None, help='targets file (without header, without file name ending)')
     
     # logging results
     parser.add_argument('--results-dir', nargs='?', default='logs', help='logs directory')
@@ -54,17 +54,17 @@ def parse_args(argv):
     # model parameters
     parser.add_argument('--model-class', nargs='?', default='PSMVAE_b', choices=model_map.keys(), help='model class, choices: ' 
                             + ' '.join(model_map.keys()))
-    parser.add_argument('--batch-size', type=int, default=200, metavar='N', help='input batch size for training (default: 200)')
-    parser.add_argument('--max-epochs', type=int, default=10, metavar='N', help='number of epochs to train (default: 1,000)')
+    parser.add_argument('--batch-size', type=int, default=512, metavar='N', help='input batch size for training (default: 200)')
+    parser.add_argument('--max-epochs', type=int, default=1, metavar='N', help='number of epochs to train (default: 1,000)')
     parser.add_argument('--learning-rate', type=float, default=1e-3, metavar='N', help='learning rate of Adam optimizer')
     parser.add_argument('--weight-decay', type=float, default=0)
     parser.add_argument('--miss-mask-training', action='store_true', default=False,
                             help='incorporation of missingness mask in training')
-    parser.add_argument('--num-samples', type=int, default=10, help='number of draws')
+    parser.add_argument('--num-samples', type=int, default=1, help='number of draws')
     parser.add_argument('--num-samples-train', type=int, default=1, help='number of draws in training')
     parser.add_argument('--z-dim', type=int, default=20, help='dimension of latent factor z (default: 20)')
     parser.add_argument('--r-cat-dim', type=int, default=10, help='dimension of latent factor s (default: 10)')  
-    parser.add_argument('--h-dim', type=int, default=128, help='dimension of hidden layers (default: 128)')
+    parser.add_argument('--h-dim', type=int, default=400, help='dimension of hidden layers (default: 128)')
     parser.add_argument('--pi', type=float, default=0.005, help='1-pi is probability of supervision of xmis')
     parser.add_argument('--z-beta', type=float, default=1, help='weight of z KLD')
     parser.add_argument('--r-beta', type=float, default=1, help='weight of r KLD')
@@ -73,10 +73,11 @@ def parse_args(argv):
     parser.add_argument('--post-sample', action='store_true', default=False, help='dample from MICE')
     parser.add_argument('--hint-rate', help='hint probability of GAIN', default=0.9, type=float)    
     parser.add_argument('--alpha', help='hyperparameter of GAIN', default=100, type=float)
-    parser.add_argument('--mul-imp', action='store_true', default=False, help='multiple imputation')
+    parser.add_argument('--mul_imp', action='store_true', default=False, help='multiple imputation')
 
     args = parser.parse_args()
     
+    args.mnist = ('MNIST' in args.compl_data_file)
 
     args.cuda = torch.cuda.is_available()
 
@@ -89,6 +90,7 @@ def parse_args(argv):
         model_map['miwae'] = miwae.notMiwae
         model_map['notmiwae'] = miwae.notMiwae
         args.z_dim = 1
+        args.num_samples_train = 50
 
     if 'IPTW' in args.model_class:
         args.iptw = True
@@ -149,13 +151,14 @@ def main(args):
     M_sim_miss_test = M_sim_miss_test.values
     
     # normalize data 
-    data_train, norm_parameters = normalization(data_train_ori.values)
-    data_val, _ = normalization(data_val_ori.values, norm_parameters)
-    data_test, _ = normalization(data_test_ori.values, norm_parameters)
+    norm_type = 'minmax' * args.mnist + 'standard' * (1-args.mnist)
+    data_train, norm_parameters = normalization(data_train_ori.values,None, norm_type)
+    data_val, _ = normalization(data_val_ori.values, norm_parameters, norm_type)
+    data_test, _ = normalization(data_test_ori.values, norm_parameters, norm_type)
 
-    compl_data_train, _ = normalization(compl_data_train_ori.values)
-    compl_data_val, _ = normalization(compl_data_val_ori.values, norm_parameters)
-    compl_data_test, _ = normalization(compl_data_test_ori.values, norm_parameters)
+    compl_data_train, _ = normalization(compl_data_train_ori.values, None, norm_type)
+    compl_data_val, _ = normalization(compl_data_val_ori.values, norm_parameters, norm_type)
+    compl_data_test, _ = normalization(compl_data_test_ori.values, norm_parameters, norm_type)
 
     # logging
     make_deterministic(args.seed)
@@ -199,25 +202,28 @@ def main(args):
         elif (args.model_class == 'miwae') or (args.model_class == 'notmiwae'):
             train_imputed, test_imputed = model_map[args.model_class](compl_data_train, data_train, compl_data_test, compl_data_test, norm_parameters, wandb, args)
 
+    if args.mnist:
+        save_image_reconstructions(train_imputed*M_sim_miss_train+compl_data_train*(1-M_sim_miss_train), compl_data_train, M_sim_miss_train, 28, 'images', args.wandb_run_name)
+    
     # compute losses
     M_obs_train, M_obs_test = ~M_sim_miss_train & ~np.isnan(compl_data_train), ~M_sim_miss_test & ~np.isnan(compl_data_test)
 
     if not args.mul_imp:
         # renormalization
-        train_imputed = renormalization(train_imputed, norm_parameters)
-        test_imputed = renormalization(test_imputed, norm_parameters)
-        compl_data_train = renormalization(compl_data_train, norm_parameters)
-        compl_data_test = renormalization(compl_data_test, norm_parameters)
+        train_imputed = renormalization(train_imputed, norm_parameters, norm_type)
+        test_imputed = renormalization(test_imputed, norm_parameters, norm_type)
+        compl_data_train = renormalization(compl_data_train, norm_parameters, norm_type)
+        compl_data_test = renormalization(compl_data_test, norm_parameters, norm_type)
 
         # rounding
         train_imputed = rounding(train_imputed, compl_data_train)
         test_imputed = rounding(test_imputed, compl_data_test)
     else:
         # renormalization
-        train_imputed = [renormalization(train_imputed[i], norm_parameters) for i in range(len(train_imputed))]
-        test_imputed = [renormalization(test_imputed[i], norm_parameters) for i in range(len(test_imputed))]
-        compl_data_train = renormalization(compl_data_train, norm_parameters)
-        compl_data_test = renormalization(compl_data_test, norm_parameters)
+        train_imputed = [renormalization(train_imputed[i], norm_parameters, norm_type) for i in range(len(train_imputed))]
+        test_imputed = [renormalization(test_imputed[i], norm_parameters, norm_type) for i in range(len(test_imputed))]
+        compl_data_train = renormalization(compl_data_train, norm_parameters, norm_type)
+        compl_data_test = renormalization(compl_data_test, norm_parameters, norm_type)
 
         # rounding
         train_imputed = [rounding(train_imputed[i], compl_data_train) for i in range(len(train_imputed))]
@@ -244,7 +250,7 @@ def main(args):
 
         # loss for a single importance sample
         if 'VAE' in args.model_class:
-            train_imputed_1 = renormalization(train_imputed_1, norm_parameters)
+            train_imputed_1 = renormalization(train_imputed_1, norm_parameters, norm_type)
             train_imputed_1 = rounding(train_imputed_1, compl_data_train)
             train_1_mis_mse = rmse_loss(train_imputed_1, compl_data_train, M_sim_miss_train)
             wandb.log({'Train Imputation RMSE loss (single sample)': train_1_mis_mse})

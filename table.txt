@@ -1042,3 +1042,10 @@ data/spam/miss_data/MNAR1var_uniform_frac_80_seed_4,4,PSMVAE_b,0.038410876973180
 data/spam/miss_data/MNAR1var_uniform_frac_20_seed_4,4,PSMVAE_a,0.009636236969059154,0.09844974693666605
 data/spam/miss_data/MNAR1var_uniform_frac_80_seed_4,4,PSMVAE_b,0.038699418886806995,0.25035099995851917
 data/spam/miss_data/MNAR1var_uniform_frac_80_seed_4,4,PSMVAE_a,0.031515492341635996,0.17430221825026587
+data/MNIST/miss_data/MCAR_uniform_frac_20_seed_0,0,gain,0.18065936479462227,0.1819052946086398
+data/MNIST/miss_data/MCAR_uniform_frac_80_seed_0,0,gain,0.32396346420251443,0.3248243849369315
+data/MNIST/miss_data/label_uniform_frac_20_seed_0,0,gain,0.39365090229737304,0.39647540955613486
+data/MNIST/miss_data/label_uniform_frac_80_seed_0,0,gain,0.3443406635587921,0.3457151793780825
+data/MNIST/miss_data/MCAR_uniform_frac_20_seed_0,0,PSMVAE_b,0.12766492686182168,0.13317612958196254
+data/MNIST/miss_data/MCAR_uniform_frac_20_seed_0,0,PSMVAE_a,0.8627734078209675,0.8626430300665932
+data/MNIST/miss_data/MCAR_uniform_frac_80_seed_0,0,PSMVAE_b,0.17407556711705574,0.17642155733146492

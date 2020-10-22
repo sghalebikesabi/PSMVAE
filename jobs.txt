@@ -71,9 +71,14 @@ Submitted batch job 775527
 Submitted batch job 775528
 Submitted batch job 775529
 Submitted batch job 775530
+<<<<<<< HEAD
 Submitted batch job 778187                                                                                                                                                   
 Submitted batch job 778188                                                                                                                                                   
 Submitted batch job 778189                                                                                                                                                   
+=======
+Submitted batch job 776910                                                                                                     
+Submitted batch job 776911
+>>>>>>> MNIST
 
 ./run_ratio.sh 
 greytail{ghalebik} % /data/localhost/not-backed-up/scratch/ghalebik/slurm-script-templates % ./run_ratio.sh 

@@ -15,6 +15,7 @@ class GMVAE(torch.nn.Module):
         self.r_cat_dim = model_params_dict.r_cat_dim
         self.z_dim = model_params_dict.z_dim
         self.h_dim = model_params_dict.h_dim
+        self.mnist = model_params_dict.mnist
 
         # q(y|x) y:= r
         self.fc_xobs_h = torch.nn.Linear(self.input_dim_wm, self.h_dim)
@@ -76,6 +77,9 @@ class GMVAE(torch.nn.Module):
         hz = F.relu(self.fc_z_h(z))
         h2 = F.relu(self.fc_hz_h(hz))
         x = self.fc_h_xm(h2)
+
+        if self.mnist:
+            x[:,:self.input_dim] = torch.sigmoid(x[:,:self.input_dim])
 
         recon = {
             'incompl_data': x[:,:self.input_dim],

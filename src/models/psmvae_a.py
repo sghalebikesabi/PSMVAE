@@ -15,6 +15,7 @@ class Model(torch.nn.Module):
         self.r_cat_dim = model_params_dict.r_cat_dim
         self.z_dim = model_params_dict.z_dim
         self.h_dim = model_params_dict.h_dim
+        self.mnist = model_params_dict.mnist
 
         # q(y|x) y:= r
         self.fc_xobs_h = torch.nn.Linear(self.input_dim_wm, self.h_dim)
@@ -106,6 +107,8 @@ class Model(torch.nn.Module):
             m_output = torch.sigmoid(torch.einsum("lij, jk -> lij", [m_input, torch.nn.functional.softplus(self.W[i])]) + self.b[i])
         else:
             m_output = torch.sigmoid(torch.einsum("ij, jk -> ij", [m_input, torch.nn.functional.softplus(self.W[i])]) + self.b[i])
+        if self.mnist:
+            x[...,:self.input_dim*2] = torch.sigmoid(x[:,:self.input_dim*2])
 
         recon = {
             'xobs': x[...,:self.input_dim],
