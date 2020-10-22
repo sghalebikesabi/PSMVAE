@@ -102,11 +102,14 @@ class Model(torch.nn.Module):
         h2 = F.relu(self.fc_hz_h(hz))
         x = self.fc_h_xm(h2)
 
-        m_input = x[...,:self.input_dim] * (1-m.float()) + x[...,self.input_dim:self.input_dim*2] * m
-        if test_mode:
-            m_output = torch.sigmoid(torch.einsum("lij, jk -> lij", [m_input, torch.nn.functional.softplus(self.W[i])]) + self.b[i])
-        else:
-            m_output = torch.sigmoid(torch.einsum("ij, jk -> ij", [m_input, torch.nn.functional.softplus(self.W[i])]) + self.b[i])
+        #m_input = x[...,:self.input_dim] * (1-m.float()) + x[...,self.input_dim:self.input_dim*2] * m
+        #if test_mode:
+        #    m_output = torch.sigmoid(torch.einsum("lij, jk -> lij", [m_input, torch.nn.functional.softplus(self.W[i])]) + self.b[i])
+        #else:
+        #    m_output = torch.sigmoid(torch.einsum("ij, jk -> ij", [m_input, torch.nn.functional.softplus(self.W[i])]) + self.b[i])
+        m_input = torch.cat([x, y], 1)
+        m_output = torch.sigmoid(self.fc_x_m(m_input))
+
         if self.mnist:
             x[...,:self.input_dim*2] = torch.sigmoid(x[:,:self.input_dim*2])
 

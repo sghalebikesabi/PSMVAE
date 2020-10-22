@@ -48,7 +48,7 @@ def parse_args(argv):
     parser.add_argument('--results-dir', nargs='?', default='logs', help='logs directory')
     parser.add_argument('--wandb-run-name', nargs='?', default='test', help='Name for wandb Run')
     parser.add_argument('--wandb-tag', nargs='?', default='test', help='Tag for wandb Run')
-    parser.add_argument('--log-interval', type=int, default=1000, metavar='N', help='how many epochs to wait before logging training status')
+    parser.add_argument('--log-interval', type=int, default=1, metavar='N', help='how many epochs to wait before logging training status')
     parser.add_argument('--seed', type=int, default=123, metavar='S', help='random seed (default: 1)')
 
     # model parameters
@@ -107,7 +107,7 @@ def parse_args(argv):
         args.post_sample = True
 
     if args.cuda:
-        args.log_interval = 1000
+        args.log_interval = 1
 
     return(args)
 
