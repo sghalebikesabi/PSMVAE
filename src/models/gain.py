@@ -11,6 +11,10 @@ import tensorflow as tf
 import numpy as np
 from tqdm import tqdm
 
+from utils import normalization, renormalization
+
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior() 
 
 def binary_sampler(p, rows, cols):
   '''Sample binary random variables.
@@ -105,10 +109,10 @@ def gain (data_x, data_x_test, gain_parameters, args):
     h_dim = int(dim)
     
     # Normalization
-    # norm_data, norm_parameters = normalization(data_x)
-    # norm_data_x = np.nan_to_num(norm_data, 0)
-    # norm_data_test, norm_parameters_test = normalization(data_x_test, norm_parameters)
-    # norm_data_x_test = np.nan_to_num(norm_data_test, 0)
+    norm_data, norm_parameters = normalization(data_x, None, 'minmax')
+    norm_data_x = np.nan_to_num(norm_data, 0)
+    norm_data_test, norm_parameters_test = normalization(data_x_test, norm_parameters, 'minmax')
+    norm_data_x_test = np.nan_to_num(norm_data_test, 0)
     
     norm_data_x = np.nan_to_num(data_x, 0)
     norm_data_x_test = np.nan_to_num(data_x_test, 0)
@@ -227,9 +231,12 @@ def gain (data_x, data_x_test, gain_parameters, args):
       Z_mb = uniform_sampler(0, 0.01, no, dim)
       M_mb = data_m
       X_mb = norm_data_x                    
-      X_mb = M_mb * X_mb + (1-args.no_post_sample) * ((1-M_mb) * Z_mb)
+      X_mb = (1-args.post_sample) * M_mb * X_mb + args.post_sample * ((1-M_mb) * Z_mb)
 
       imputed_data = sess.run([G_sample], feed_dict = {X: X_mb, M: M_mb})[0] 
+
+      imputed_data = renormalization(imputed_data, norm_parameters, 'minmax')
+
       imputed_list.append(imputed_data)
     
 
@@ -239,9 +246,12 @@ def gain (data_x, data_x_test, gain_parameters, args):
       Z_mb_test = uniform_sampler(0, 0.01, no_test, dim) 
       M_mb_test = data_m_test
       X_mb_test = norm_data_x_test                    
-      X_mb_test = M_mb_test * X_mb_test + (1-args.no_post_sample) * ((1-M_mb_test) * Z_mb_test)
+      X_mb_test = (1-args.post_sample) * M_mb_test * X_mb_test + args.post_sample * ((1-M_mb_test) * Z_mb_test)
 
       imputed_data_test = sess.run([G_sample], feed_dict = {X: X_mb_test, M: M_mb_test})[0]
+
+      imputed_data = renormalization(imputed_data_test, norm_parameters, 'minmax')
+
       imputed_list_test.append(imputed_data_test)
 
                     
