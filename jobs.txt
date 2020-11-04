@@ -23,6 +23,18 @@ Submitted batch job 775495
 Submitted batch job 775496
 Submitted batch job 775497
 Submitted batch job 775498
+Submitted batch job 780940
+Submitted batch job 780941
+Submitted batch job 780942
+Submitted batch job 780943
+Submitted batch job 780944
+Submitted batch job 780945
+Submitted batch job 780946
+Submitted batch job 780947
+Submitted batch job 780948
+Submitted batch job 780949
+Submitted batch job 780950
+Submitted batch job 780951
 
 ./run_m.sh 
 Submitted batch job 778266
@@ -59,25 +71,30 @@ Submitted batch job 775527
 Submitted batch job 775528
 Submitted batch job 775529
 Submitted batch job 775530
+<<<<<<< HEAD
 Submitted batch job 778187                                                                                                                                                   
 Submitted batch job 778188                                                                                                                                                   
 Submitted batch job 778189                                                                                                                                                   
+=======
+Submitted batch job 776910                                                                                                     
+Submitted batch job 776911
+>>>>>>> MNIST
 
 ./run_ratio.sh 
 greytail{ghalebik} % /data/localhost/not-backed-up/scratch/ghalebik/slurm-script-templates % ./run_ratio.sh 
-Submitted batch job 778764
-Submitted batch job 778765
-Submitted batch job 778766
-Submitted batch job 778767
-Submitted batch job 778768
-Submitted batch job 778769
-Submitted batch job 778770
-Submitted batch job 778771
-Submitted batch job 778772
-Submitted batch job 778773
-Submitted batch job 778774
-Submitted batch job 778775
-Submitted batch job 778776
-Submitted batch job 778777
-Submitted batch job 778778
-Submitted batch job 778779
+Submitted batch job 778797                                                                                                                                                   
+Submitted batch job 778798
+Submitted batch job 778799
+Submitted batch job 778800
+Submitted batch job 778801
+Submitted batch job 778802
+Submitted batch job 778803
+Submitted batch job 778804
+Submitted batch job 778805
+Submitted batch job 778806
+Submitted batch job 778807
+Submitted batch job 778808
+Submitted batch job 778809
+Submitted batch job 778810
+Submitted batch job 778811
+Submitted batch job 778812
