@@ -69,17 +69,19 @@ def parse_args(argv):
     parser.add_argument('--z-beta', type=float, default=1, help='weight of z KLD')
     parser.add_argument('--r-beta', type=float, default=1, help='weight of r KLD')
     parser.add_argument('--xmis-beta', type=float, default=1, help='weight of xmis KLD')
+    parser.add_argument('--downstream-logreg', action='store_true', default=False, help='should downstream logistic regression be run on targets')
     parser.add_argument('--iptw', action='store_true', default=False, help='IPTW weighting')
     parser.add_argument('--post-sample', action='store_true', default=False, help='dample from MICE')
     parser.add_argument('--hint-rate', help='hint probability of GAIN', default=0.9, type=float)    
     parser.add_argument('--alpha', help='hyperparameter of GAIN', default=100, type=float)
-    parser.add_argument('--mul_imp', action='store_true', default=False, help='multiple imputation')
+    parser.add_argument('--mul-imp', action='store_true', default=False, help='multiple imputation')
 
     args = parser.parse_args()
     
     args.mnist = ('MNIST' in args.compl_data_file)
 
     args.cuda = torch.cuda.is_available()
+    print(args.cuda)
 
     if args.model_class == 'gain':
         from models import gain
@@ -263,13 +265,14 @@ def main(args):
     else:
         data_x_train = np.concatenate(train_imputed, 0)
         data_x_test = np.concatenate(test_imputed, 0)
-        targets_train_full = np.tile(ohe_targets_train, (args.num_samples,1))
-        targets_test_full = np.tile(ohe_targets_test, (args.num_samples,1))
-        clf = LogisticRegression(random_state=args.seed).fit(data_x_train, targets_train_full.argmax(1))
-        test_acc = clf.score(data_x_test, targets_test_full.argmax(1))
+        if args.downstream_logreg:
+            targets_train_full = np.tile(ohe_targets_train, (args.num_samples,1))
+            targets_test_full = np.tile(ohe_targets_test, (args.num_samples,1))
+            clf = LogisticRegression(random_state=args.seed).fit(data_x_train, targets_train_full.argmax(1))
+            test_acc = clf.score(data_x_test, targets_test_full.argmax(1))
 
-        wandb.log({'Test accuracy': test_acc})
-        print(test_acc)
+            wandb.log({'Test accuracy': test_acc})
+            print(test_acc)
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:]) # sys.argv[0] is file name

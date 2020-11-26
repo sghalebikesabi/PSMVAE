@@ -295,6 +295,7 @@ def generate_synthetic_data(n=5000, rho=0.1, miss_ratio=0.2, train_pct=0.8, val_
     mean = [2, -2, 0]  
     rho = 0.1
     cov = [[1, rho, rho], [rho, 1, 0], [rho, 0, 1]]
+    
     data = np.random.multivariate_normal(mean, cov, (n))
     observedi = np.random.choice([0, 1], n, p = [miss_ratio, 1-miss_ratio])
     data[:, 1][observedi] = data[:, 2][observedi] # column 2 is observed data, column 1 is miss data
