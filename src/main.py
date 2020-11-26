@@ -40,8 +40,8 @@ def parse_args(argv):
     parser = argparse.ArgumentParser(description='VAEs for missingness example')
 
     # input data
-    parser.add_argument('--compl-data-file', nargs='?', default='data/MNIST/data_0', help='complete data file (without header, without file name ending)')
-    parser.add_argument('--miss-data-file', nargs='?', default='data/MNIST/miss_data/label_uniform_frac_20_seed_0', help='missing data file (without header, without file name ending)')
+    parser.add_argument('--compl-data-file', nargs='?', default='data/synth/n_5000_m_2_seed_0', help='complete data file (without header, without file name ending)')
+    parser.add_argument('--miss-data-file', nargs='?', default='data/synth/miss_data/n_5000_m_2_missratio_20_seed_0', help='missing data file (without header, without file name ending)')
     parser.add_argument('--targets-file', nargs='?', default=None, help='targets file (without header, without file name ending)')
     
     # logging results

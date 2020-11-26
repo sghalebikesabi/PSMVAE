@@ -283,3 +283,40 @@ def induce_red_missingness(sample_X, sample_M, image_dim_0):
                     RGB_sample_image_with_red_miss[i,:,j,k] = [255, 0, 0]
 
     return(torch.tensor(RGB_sample_image_with_red_miss), torch.tensor(RGB_sample_image))
+
+
+def generate_synthetic_data(n=5000, rho=0.1, miss_ratio=0.2, train_pct=0.8, val_pct=0.1, seed=0):
+    import numpy as np
+    import os
+    import pandas as pd
+    import random
+
+    random.seed(seed)
+    mean = [2, -2, 0]  
+    rho = 0.1
+    cov = [[1, rho, rho], [rho, 1, 0], [rho, 0, 1]]
+    data = np.random.multivariate_normal(mean, cov, (n))
+    observedi = np.random.choice([0, 1], n, p = [miss_ratio, 1-miss_ratio])
+    data[:, 1][observedi] = data[:, 2][observedi] # column 2 is observed data, column 1 is miss data
+    new_data = pd.DataFrame(np.delete(data, 2, axis = 1))
+    miss_data = new_data.copy()
+    miss_data[(1-observedi)>0, 1] = np.nan
+    M = pd.DataFrame(np.isnan(miss_data))
+
+    train_idx = int(train_pct*n)
+    val_idx = int((train_pct+val_pct)*n)
+    random_permute = np.random.RandomState(seed=seed).permutation(len(data))
+    M_train, M_val, M_test = M.iloc[random_permute[:train_idx]], M.iloc[random_permute[train_idx:val_idx]], M.iloc[random_permute[val_idx:]]  
+    data_train, data_val, data_test = new_data.iloc[random_permute[:train_idx]], new_data.iloc[random_permute[train_idx:val_idx]], new_data.iloc[random_permute[val_idx:]]  
+
+    data_file = "data/synth"
+    data_name = f"n_{n}_m_2_seed_{seed}"
+    miss_file_name = f"n_{n}_m_2_missratio_20_seed_{seed}"
+
+    data_train.to_csv(os.path.join(data_file, f"{data_name}.train"), header=False, index=False)
+    data_val.to_csv(os.path.join(data_file, f"{data_name}.val"), header=False, index=False)
+    data_test.to_csv(os.path.join(data_file, f"{data_name}.test"), header=False, index=False)
+
+    M_train.to_csv(os.path.join(data_file, "miss_data", miss_file_name + ".train"), header=False, index=False)
+    M_val.to_csv(os.path.join(data_file, "miss_data", miss_file_name + ".val"), header=False, index=False)
+    M_test.to_csv(os.path.join(data_file, "miss_data", miss_file_name + ".test"), header=False, index=False)

@@ -42,10 +42,11 @@ class Model(torch.nn.Module):
         self.fc_h_xm = torch.nn.Linear(self.h_dim, self.input_dim + self.input_dim)
 
         self.fc_x_m = torch.nn.Linear(self.input_dim*2 + self.r_cat_dim, self.input_dim)
-        self.W = torch.nn.ParameterList([nn.Parameter(torch.zeros((self.input_dim, 1), device=model_params_dict.device)) for i in range(self.r_cat_dim)])
-        self.b = torch.nn.ParameterList([nn.Parameter(torch.zeros((1, self.input_dim), device=model_params_dict.device)) for i in range(self.r_cat_dim)])
-        for i in range(self.r_cat_dim):
-            torch.nn.init.xavier_normal_(self.W[i])
+
+        # self.W = torch.nn.ParameterList([nn.Parameter(torch.zeros((self.input_dim, 1), device=model_params_dict.device)) for i in range(self.r_cat_dim)])
+        # self.b = torch.nn.ParameterList([nn.Parameter(torch.zeros((1, self.input_dim), device=model_params_dict.device)) for i in range(self.r_cat_dim)])
+        # for i in range(self.r_cat_dim):
+        #     torch.nn.init.xavier_normal_(self.W[i])
 
     def qy_graph(self, xm):
         # q(y|x)
