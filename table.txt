@@ -1089,3 +1089,13 @@ data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_a,1.3929662335541
 data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_a,1.1994505716645876,1.259431157928302
 data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_a,1.1994505716645876,1.259431157928302
 data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,GMVAE,1.6458427240483393,1.5763847184419533
+data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,GMVAE,1.6537133806393995,1.622304014698938
+data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,GMVAE,1.6537133806393995,1.622304014698938
+data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,GMVAE,1.638733786616898,1.622304014698938
+data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,GMVAE,1.6528190288610136,1.622304014698938
+data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,GMVAE,1.6553906038996575,1.622304014698938
+data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,GMVAE,1.6553906038996575,1.622304014698938
+data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,GMVAE,1.656440411250314,1.622304014698938
+data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,GMVAE,1.6309662361269737,1.622304014698938
+data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_b,nan,0.7379075793157408
+data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_b,0.7944298311518071,0.7379075793157408

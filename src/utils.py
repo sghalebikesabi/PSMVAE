@@ -24,7 +24,7 @@ def impute(model, data, args, kwargs):
 
         log_p_xobs_given_z_r =  M_obs*log_normal(data_filled, recon['xobs'], torch.tensor([0.25]).to(args.device)) # ! 0.25
         if 'PSMVAE' in args.model_class:
-          log_p_xmis_given_z_r =  log_normal(latent_samples['xmis']*M_miss, recon['xmis']*M_miss, torch.tensor([0.25]).to(args.device)) 
+          log_p_xmis_given_z_r = log_normal(latent_samples['xmis']*M_miss, recon['xmis']*M_miss, torch.tensor([0.25]).to(args.device)) 
           # log_p_xmis_given_z_r = 0 # log_normal(latent_samples['xmis']*M_miss, recon['xmis']*M_miss, torch.tensor([0.5])) 
           log_p_xmis_given_z_r += log_normal(latent_samples['xmis']*M_obs, recon['xmis']*M_obs, torch.tensor([0.25]).to(args.device)) * args.pi # ! 0.25
           log_p_xmis_given_z_r += log_normal(data_filled*M_obs, recon['xmis']*M_obs, torch.tensor([0.25]).to(args.device)) * (1 - args.pi) # ! 0.25
@@ -41,22 +41,32 @@ def impute(model, data, args, kwargs):
         # latent_samples['z'].shape
         # torch.Size([10, 20, 1, 20])
 
-        log_p_r = variational_params['py']
+        log_p_r = torch.log(variational_params['py'])
 
         log_q_z_given_r_xobs = log_normal(latent_samples['z'], 
                                             variational_params['z_mu'].reshape(args.r_cat_dim, 1, 1,  args.z_dim).repeat(1, args.num_samples, 1, 1), 
                                             torch.exp(variational_params['z_logvar'].reshape(args.r_cat_dim, 1, 1,  args.z_dim).repeat(1, args.num_samples, 1, 1)))
         
-        log_q_r_xobs_m = variational_params['qy']
+        log_q_r_xobs_m = variational_params['qy_logit']
 
         imp_weights = log_p_z_given_r.sum(-1).squeeze() + log_p_r.T.repeat((1, args.num_samples)) - log_q_z_given_r_xobs.sum(-1).squeeze() - log_q_r_xobs_m.T.repeat((1, args.num_samples)).squeeze()
-        imp_weights_xobs = torch.nn.functional.softmax((imp_weights + log_p_xobs_given_z_r.sum(-1).squeeze()).reshape(args.num_samples*args.r_cat_dim), 0) 
-        imp_weights_xmis = torch.nn.functional.softmax((imp_weights + log_p_xmis_given_z_r.sum(-1).squeeze()).reshape(args.num_samples*args.r_cat_dim), 0) 
-        xobs_imputed_full[batch_idx, :] = torch.einsum('k,kj->j', imp_weights_xobs.float(), recon['xobs'].reshape(args.num_samples*args.r_cat_dim, recon['xobs'].shape[-1]))
+        ###
+        imp_weights_xobs = torch.nn.functional.softmax((imp_weights + log_p_xobs_given_z_r.sum(-1).squeeze()).sum(0), 0)
+        imp_weights_xmis = torch.nn.functional.softmax((imp_weights + log_p_xmis_given_z_r.sum(-1).squeeze()).sum(0), 0)
+        # imp_weights_xobs = torch.nn.functional.softmax((imp_weights_xobs).reshape(args.num_samples*args.r_cat_dim), 0) 
+        # imp_weights_xmis = torch.nn.functional.softmax((imp_weights_xmis).reshape(args.num_samples*args.r_cat_dim), 0) 
+        # imp_weights_xobs = torch.nn.functional.softmax((imp_weights_xobs).reshape(args.num_samples*args.r_cat_dim), 0) 
+        # imp_weights_xmis = torch.nn.functional.softmax((imp_weights_xmis).reshape(args.num_samples*args.r_cat_dim), 0) 
+        # xobs_imputed_full[batch_idx, :] = torch.einsum('k,kj->j', imp_weights_xobs.float(), recon['xobs'].reshape(args.num_samples*args.r_cat_dim, recon['xobs'].shape[-1]))
+        xobs_imputed_full[batch_idx, :] = torch.einsum('k, kj->j', [imp_weights_xobs.float(), torch.einsum('rkij, ir -> kj', [recon['xobs'], variational_params['qy']])])
         if 'PSMVAE' in args.model_class:
-          xmis_imputed_full[batch_idx, :] = torch.einsum('k,kj->j', imp_weights_xmis.float(), recon['xmis'].reshape(args.num_samples*args.r_cat_dim, recon['xmis'].shape[-1]))
+          # xmis_imputed_full[batch_idx, :] = torch.einsum('k,kj->j', imp_weights_xmis.float(), recon['xmis'].reshape(args.num_samples*args.r_cat_dim, recon['xmis'].shape[-1]))
+          xmis_imputed_full[batch_idx, :] = torch.einsum('k, kj->j', [imp_weights_xmis.float(), torch.einsum('rkij, ir -> kj', [recon['xmis'], variational_params['qy']])])
         else:
           xmis_imputed_full = xobs_imputed_full
+        # if xobs_imputed_full[batch_idx, :].isnan().sum() > 0:
+        #   pass
+        ###
 
     return(xobs_imputed_full, xmis_imputed_full)
 
