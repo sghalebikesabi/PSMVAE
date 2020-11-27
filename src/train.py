@@ -114,6 +114,9 @@ def train_VAE(data_train_full, data_test_full, compl_data_train_full, compl_data
     model.apply(init_weights)
     optimizer = optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
+    norm_type = 'minmax' * args.mnist + 'standard' * (1-args.mnist)
+    compl_data_train_full_renorm = renormalization(compl_data_train_full.copy(), norm_parameters, norm_type)
+
     for epoch in tqdm(range(args.max_epochs)):
 
         model.train()
@@ -137,23 +140,34 @@ def train_VAE(data_train_full, data_test_full, compl_data_train_full, compl_data
             wandb.log({k: v.cpu().detach().numpy() for k, v in loss_dict.items()})
             model.eval()
             with torch.no_grad():
-                for batch_idx, (data, compl_data) in enumerate(test_loader):
-                    # data 
-                    data = data.float().to(args.device)
-                    compl_data = compl_data.float().to(args.device)
-                    M_obs = ~data.isnan() & ~compl_data.isnan()
-                    M_miss = data.isnan() & ~compl_data.isnan()
-                    data[data!=data] = 0
-                    # optimization
-                    recon, variational_params, latent_samples = model(data, M_miss)
-                    loss_dict = loss(recon, variational_params, latent_samples, data, compl_data, M_obs, M_miss, args, 'test')
-                    wandb.log({k: v.cpu().detach().numpy() for k, v in loss_dict.items()})
+                recon_train, variational_params_train, latent_samples_train = model(data_train_filled_full, torch.tensor(M_sim_miss_train_full).to(args.device))
+
+                train_imputed_xobs_ = renormalization(recon_train['xobs'].cpu(), norm_parameters)
+                train_imputed_xobs_ = rounding(train_imputed_xobs_, compl_data_train_full_renorm)
+                train_xobs_mis_mse = rmse_loss(train_imputed_xobs_.cpu().numpy().squeeze(), compl_data_train_full_renorm, M_sim_miss_train_full)
+                train_imputed_xmis_ = renormalization(recon_train['xmis'].cpu(), norm_parameters)
+                train_imputed_xmis_ = rounding(train_imputed_xmis_, compl_data_train_full_renorm)
+                train_xmis_mis_mse = rmse_loss(train_imputed_xmis_.cpu().numpy().squeeze(), compl_data_train_full_renorm, M_sim_miss_train_full)
+                
+                wandb.log({'xobs imp rmse': train_xobs_mis_mse, 'xmis imp rmse': train_xmis_mis_mse,})
+
+
+
+            #     for batch_idx, (data, compl_data) in enumerate(test_loader):
+            #         # data 
+            #         data = data.float().to(args.device)
+            #         compl_data = compl_data.float().to(args.device)
+            #         M_obs = ~data.isnan() & ~compl_data.isnan()
+            #         M_miss = data.isnan() & ~compl_data.isnan()
+            #         data[data!=data] = 0
+            #         # optimization
+            #         recon, variational_params, latent_samples = model(data, M_miss)
+            #         loss_dict = loss(recon, variational_params, latent_samples, data, compl_data, M_obs, M_miss, args, 'test')
+            #         wandb.log({k: v.cpu().detach().numpy() for k, v in loss_dict.items()})
 
     model.eval()
     
-    norm_type = 'minmax' * args.mnist + 'standard' * (1-args.mnist)
     with torch.no_grad():
-        compl_data_train_full_renorm = renormalization(compl_data_train_full.copy(), norm_parameters, norm_type)
 
         if args.model_class == 'PSMVAE_a' or args.model_class == 'PSMVAE_b':
             imp_name = 'xobs' # !!!!!!!!!!!!!!!!!!!!!
