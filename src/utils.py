@@ -22,17 +22,19 @@ def impute(model, data, args, kwargs):
         recon, variational_params, latent_samples = model(data_filled, M_miss, test_mode=True, L=args.num_samples)
         variational_params['py'] = torch.ones_like(variational_params['qy']).to(args.device)/variational_params['qy'].shape[1]
 
+        log_p_xobs_given_z_r =  M_obs*log_normal(data_filled, recon['xobs'], torch.tensor([0.5]).to(args.device)) # ! 0.25
         if 'PSMVAE' in args.model_class:
           log_p_xmis_given_z_r =  log_normal(latent_samples['xmis']*M_miss, recon['xmis']*M_miss, torch.tensor([0.5]).to(args.device)) 
           # log_p_xmis_given_z_r = 0 # log_normal(latent_samples['xmis']*M_miss, recon['xmis']*M_miss, torch.tensor([0.5])) 
           log_p_xmis_given_z_r += log_normal(latent_samples['xmis']*M_obs, recon['xmis']*M_obs, torch.tensor([0.5]).to(args.device)) * args.pi # ! 0.25
           log_p_xmis_given_z_r += log_normal(data_filled*M_obs, recon['xmis']*M_obs, torch.tensor([0.5]).to(args.device)) * (1 - args.pi) # ! 0.25
         else:
-          log_p_xmis_given_z_r = 0
+          log_p_xmis_given_z_r = torch.zeros_like(log_p_xobs_given_z_r)
 
-        log_p_xobs_given_z_r =  M_obs*log_normal(data_filled, recon['xobs'], torch.tensor([0.5]).to(args.device)) # ! 0.25
         
-        log_p_z_given_r = log_normal(latent_samples['z'], variational_params['z_mu_prior'], torch.exp(variational_params['z_logvar_prior']))
+        log_p_z_given_r = log_normal(latent_samples['z'], 
+                                      variational_params['z_mu'].reshape(args.r_cat_dim, 1, 1,  args.z_dim).repeat(1, args.num_samples, 1, 1),
+                                      torch.exp(variational_params['z_logvar'].reshape(args.r_cat_dim, 1, 1,  args.z_dim).repeat(1, args.num_samples, 1, 1)))
 
         # variational_params['z_mu_prior'].shape
         # torch.Size([10, 1, 20])
@@ -51,7 +53,10 @@ def impute(model, data, args, kwargs):
         imp_weights_xobs = torch.nn.functional.softmax((imp_weights + log_p_xobs_given_z_r.sum(-1).squeeze()).reshape(args.num_samples*args.r_cat_dim), 0) 
         imp_weights_xmis = torch.nn.functional.softmax((imp_weights + log_p_xmis_given_z_r.sum(-1).squeeze()).reshape(args.num_samples*args.r_cat_dim), 0) 
         xobs_imputed_full[batch_idx, :] = torch.einsum('k,kj->j', imp_weights_xobs.float(), recon['xobs'].reshape(args.num_samples*args.r_cat_dim, recon['xobs'].shape[-1]))
-        xmis_imputed_full[batch_idx, :] = torch.einsum('k,kj->j', imp_weights_xmis.float(), recon['xmis'].reshape(args.num_samples*args.r_cat_dim, recon['xmis'].shape[-1]))
+        if 'PSMVAE' in args.model_class:
+          xmis_imputed_full[batch_idx, :] = torch.einsum('k,kj->j', imp_weights_xmis.float(), recon['xmis'].reshape(args.num_samples*args.r_cat_dim, recon['xmis'].shape[-1]))
+        else:
+          xmis_imputed_full = xobs_imputed_full
 
     return(xobs_imputed_full, xmis_imputed_full)
 

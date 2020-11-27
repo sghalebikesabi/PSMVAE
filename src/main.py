@@ -52,15 +52,15 @@ def parse_args(argv):
     parser.add_argument('--seed', type=int, default=123, metavar='S', help='random seed (default: 1)')
 
     # model parameters
-    parser.add_argument('--model-class', nargs='?', default='GMVAE', choices=model_map.keys(), help='model class, choices: ' 
+    parser.add_argument('--model-class', nargs='?', default='PSMVAE_a', choices=model_map.keys(), help='model class, choices: ' 
                             + ' '.join(model_map.keys()))
     parser.add_argument('--batch-size', type=int, default=512, metavar='N', help='input batch size for training (default: 200)')
-    parser.add_argument('--max-epochs', type=int, default=1, metavar='N', help='number of epochs to train (default: 1,000)')
+    parser.add_argument('--max-epochs', type=int, default=10, metavar='N', help='number of epochs to train (default: 1,000)')
     parser.add_argument('--learning-rate', type=float, default=1e-3, metavar='N', help='learning rate of Adam optimizer')
     parser.add_argument('--weight-decay', type=float, default=0)
     parser.add_argument('--miss-mask-training', action='store_true', default=False,
                             help='incorporation of missingness mask in training')  
-    parser.add_argument('--num-samples', type=int, default=20, help='number of draws')
+    parser.add_argument('--num-samples', type=int, default=40, help='number of draws')
     parser.add_argument('--num-samples-train', type=int, default=1, help='number of draws in training')
     parser.add_argument('--z-dim', type=int, default=20, help='dimension of latent factor z (default: 20)')
     parser.add_argument('--r-cat-dim', type=int, default=10, help='dimension of latent factor s (default: 10)')  

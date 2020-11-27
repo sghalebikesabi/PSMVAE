@@ -41,7 +41,7 @@ class Model(torch.nn.Module):
         self.fc_hz_h = torch.nn.Linear(self.h_dim, self.h_dim)
         self.fc_h_xm = torch.nn.Linear(self.h_dim, self.input_dim + self.input_dim)
 
-        self.fc_x_m = torch.nn.Linear(self.input_dim*2 + self.r_cat_dim, self.input_dim)
+        self.fc_x_m = torch.nn.Linear(self.input_dim + self.r_cat_dim, self.input_dim)
 
         # self.W = torch.nn.ParameterList([nn.Parameter(torch.zeros((self.input_dim, 1), device=model_params_dict.device)) for i in range(self.r_cat_dim)])
         # self.b = torch.nn.ParameterList([nn.Parameter(torch.zeros((1, self.input_dim), device=model_params_dict.device)) for i in range(self.r_cat_dim)])
@@ -108,7 +108,7 @@ class Model(torch.nn.Module):
         #    m_output = torch.sigmoid(torch.einsum("lij, jk -> lij", [m_input, torch.nn.functional.softplus(self.W[i])]) + self.b[i])
         #else:
         #    m_output = torch.sigmoid(torch.einsum("ij, jk -> ij", [m_input, torch.nn.functional.softplus(self.W[i])]) + self.b[i])
-        m_input = torch.cat([x, y], -1)
+        m_input = torch.cat([x[...,:self.input_dim], y], -1)
         m_output = torch.sigmoid(self.fc_x_m(m_input))
 
         if self.mnist:
