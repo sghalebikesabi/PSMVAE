@@ -58,8 +58,8 @@ def parse_args(argv):
     parser.add_argument('--max-epochs', type=int, default=1, metavar='N', help='number of epochs to train (default: 1,000)')
     parser.add_argument('--learning-rate', type=float, default=1e-3, metavar='N', help='learning rate of Adam optimizer')
     parser.add_argument('--weight-decay', type=float, default=0)
-    parser.add_argument('--miss-mask-training', action='store_true', default=True,
-                            help='incorporation of missingness mask in training')  # !
+    parser.add_argument('--miss-mask-training', action='store_true', default=False,
+                            help='incorporation of missingness mask in training')  
     parser.add_argument('--num-samples', type=int, default=10, help='number of draws')
     parser.add_argument('--num-samples-train', type=int, default=1, help='number of draws in training')
     parser.add_argument('--z-dim', type=int, default=20, help='dimension of latent factor z (default: 20)')
@@ -74,7 +74,7 @@ def parse_args(argv):
     parser.add_argument('--post-sample', action='store_true', default=False, help='dample from MICE')
     parser.add_argument('--hint-rate', help='hint probability of GAIN', default=0.9, type=float)    
     parser.add_argument('--alpha', help='hyperparameter of GAIN', default=100, type=float)
-    parser.add_argument('--mul-imp', action='store_true', default=True, help='multiple imputation') # !
+    parser.add_argument('--mul-imp', action='store_true', default=False, help='multiple imputation') 
 
     args = parser.parse_args()
     
