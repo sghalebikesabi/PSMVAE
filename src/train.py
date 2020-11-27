@@ -156,7 +156,7 @@ def train_VAE(data_train_full, data_test_full, compl_data_train_full, compl_data
         compl_data_train_full_renorm = renormalization(compl_data_train_full.copy(), norm_parameters, norm_type)
 
         if args.model_class == 'PSMVAE_a' or args.model_class == 'PSMVAE_b':
-            imp_name = 'xmis'
+            imp_name = 'xobs' # !!!!!!!!!!!!!!!!!!!!!
         else:
             imp_name = 'xobs'
         # single importance sample
@@ -177,8 +177,8 @@ def train_VAE(data_train_full, data_test_full, compl_data_train_full, compl_data
             train_imputed_1_xmis = torch.from_numpy(data_train_full)
             
         if args.num_samples == 1:
-            train_imputed_xobs = train_imputed_1_xobs
-            train_imputed_xmis = train_imputed_1_xmis
+            train_imputed_xobs = (train_imputed_1_xobs).clone()
+            train_imputed_xmis = (train_imputed_1_xmis).clone()
             train_imputed, train_imputed_1, test_imputed = {
                 'xobs': (train_imputed_xobs.cpu().numpy(), train_imputed_1_xobs.cpu().numpy(), test_imputed.cpu().numpy()),
                 'xmis': (train_imputed_xmis.cpu().numpy(), train_imputed_1_xmis.cpu().numpy(), test_imputed.cpu().numpy())

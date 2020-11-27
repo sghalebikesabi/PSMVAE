@@ -22,12 +22,12 @@ def impute(model, data, args, kwargs):
         recon, variational_params, latent_samples = model(data_filled, M_miss, test_mode=True, L=args.num_samples)
         variational_params['py'] = torch.ones_like(variational_params['qy']).to(args.device)/variational_params['qy'].shape[1]
 
-        log_p_xobs_given_z_r =  M_obs*log_normal(data_filled, recon['xobs'], torch.tensor([0.5]).to(args.device)) # ! 0.25
+        log_p_xobs_given_z_r =  M_obs*log_normal(data_filled, recon['xobs'], torch.tensor([0.25]).to(args.device)) # ! 0.25
         if 'PSMVAE' in args.model_class:
-          log_p_xmis_given_z_r =  log_normal(latent_samples['xmis']*M_miss, recon['xmis']*M_miss, torch.tensor([0.5]).to(args.device)) 
+          log_p_xmis_given_z_r =  log_normal(latent_samples['xmis']*M_miss, recon['xmis']*M_miss, torch.tensor([0.25]).to(args.device)) 
           # log_p_xmis_given_z_r = 0 # log_normal(latent_samples['xmis']*M_miss, recon['xmis']*M_miss, torch.tensor([0.5])) 
-          log_p_xmis_given_z_r += log_normal(latent_samples['xmis']*M_obs, recon['xmis']*M_obs, torch.tensor([0.5]).to(args.device)) * args.pi # ! 0.25
-          log_p_xmis_given_z_r += log_normal(data_filled*M_obs, recon['xmis']*M_obs, torch.tensor([0.5]).to(args.device)) * (1 - args.pi) # ! 0.25
+          log_p_xmis_given_z_r += log_normal(latent_samples['xmis']*M_obs, recon['xmis']*M_obs, torch.tensor([0.25]).to(args.device)) * args.pi # ! 0.25
+          log_p_xmis_given_z_r += log_normal(data_filled*M_obs, recon['xmis']*M_obs, torch.tensor([0.25]).to(args.device)) * (1 - args.pi) # ! 0.25
         else:
           log_p_xmis_given_z_r = torch.zeros_like(log_p_xobs_given_z_r)
 
@@ -74,8 +74,8 @@ def rmse_loss(imputed_data, ori_data, data_m, norm=True):
     '''
 
     if norm:
-      ori_data, norm_parameters = normalization(ori_data, None, 'minmax')
-      imputed_data, _ = normalization(imputed_data, norm_parameters, 'minmax')
+      ori_data, norm_parameters = normalization(ori_data.copy(), None, 'minmax')
+      imputed_data, _ = normalization(imputed_data.copy(), norm_parameters, 'minmax')
 
     # Only for missing values
     nominator = np.sum((((data_m) * np.nan_to_num(ori_data) - (data_m) * imputed_data)**2))

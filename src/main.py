@@ -60,10 +60,10 @@ def parse_args(argv):
     parser.add_argument('--weight-decay', type=float, default=0)
     parser.add_argument('--miss-mask-training', action='store_true', default=False,
                             help='incorporation of missingness mask in training')  
-    parser.add_argument('--num-samples', type=int, default=40, help='number of draws')
+    parser.add_argument('--num-samples', type=int, default=100, help='number of draws')
     parser.add_argument('--num-samples-train', type=int, default=1, help='number of draws in training')
     parser.add_argument('--z-dim', type=int, default=20, help='dimension of latent factor z (default: 20)')
-    parser.add_argument('--r-cat-dim', type=int, default=10, help='dimension of latent factor s (default: 10)')  
+    parser.add_argument('--r-cat-dim', type=int, default=1, help='dimension of latent factor s (default: 10)')  
     parser.add_argument('--h-dim', type=int, default=400, help='dimension of hidden layers (default: 128)')
     parser.add_argument('--pi', type=float, default=0.005, help='1-pi is probability of supervision of xmis')
     parser.add_argument('--z-beta', type=float, default=1, help='weight of z KLD')
@@ -154,11 +154,11 @@ def main(args):
     
     # normalize data 
     norm_type = 'minmax' * args.mnist + 'standard' * (1-args.mnist)
-    data_train, norm_parameters = normalization(data_train_ori.values,None, norm_type)
+    data_train, norm_parameters = normalization(data_train_ori.values, None, norm_type)
     data_val, _ = normalization(data_val_ori.values, norm_parameters, norm_type)
     data_test, _ = normalization(data_test_ori.values, norm_parameters, norm_type)
 
-    compl_data_train, _ = normalization(compl_data_train_ori.values, None, norm_type)
+    compl_data_train, _ = normalization(compl_data_train_ori.values, norm_parameters, norm_type)
     compl_data_val, _ = normalization(compl_data_val_ori.values, norm_parameters, norm_type)
     compl_data_test, _ = normalization(compl_data_test_ori.values, norm_parameters, norm_type)
 
