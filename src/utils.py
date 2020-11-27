@@ -4,7 +4,6 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 from torchvision.utils import save_image
 
-
 def make_deterministic(seed):
     torch.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
@@ -25,15 +24,17 @@ def impute(model, data, args, kwargs):
 
         log_p_xmis_given_z_r =  log_normal(latent_samples['xmis']*M_miss, recon['xmis']*M_miss, torch.tensor([0.5]).to(args.device)) 
         # log_p_xmis_given_z_r = 0 # log_normal(latent_samples['xmis']*M_miss, recon['xmis']*M_miss, torch.tensor([0.5])) 
-        log_p_xmis_given_z_r += log_normal(latent_samples['xmis']*M_obs, recon['xmis']*M_obs, torch.tensor([0.25]).to(args.device)) * args.pi
-        log_p_xmis_given_z_r += log_normal(data_filled*M_obs, recon['xmis']*M_obs, torch.tensor([0.25]).to(args.device)) * (1 - args.pi)
-        log_p_xobs_given_z_r =  M_obs*log_normal(data_filled, recon['xobs'], torch.tensor([0.25]).to(args.device))
+        log_p_xmis_given_z_r += log_normal(latent_samples['xmis']*M_obs, recon['xmis']*M_obs, torch.tensor([0.5]).to(args.device)) * args.pi # ! 0.25
+        log_p_xmis_given_z_r += log_normal(data_filled*M_obs, recon['xmis']*M_obs, torch.tensor([0.5]).to(args.device)) * (1 - args.pi) # ! 0.25
+        log_p_xobs_given_z_r =  M_obs*log_normal(data_filled, recon['xobs'], torch.tensor([0.5]).to(args.device)) # ! 0.25
         
         log_p_z_given_r = log_normal(latent_samples['z'], variational_params['z_mu_prior'], torch.exp(variational_params['z_logvar_prior']))
 
         log_p_r = variational_params['py']
 
-        log_q_z_given_r_xobs = log_normal(latent_samples['z'], variational_params['z_mu'], torch.exp(variational_params['z_logvar']))
+        log_q_z_given_r_xobs = log_normal(latent_samples['z'], 
+                                            variational_params['z_mu'].reshape(args.r_cat_dim, 1, 1,  args.z_dim).repeat(1, args.num_samples, 1, 1), 
+                                            torch.exp(variational_params['z_logvar'].reshape(args.r_cat_dim, 1, 1,  args.z_dim).repeat(1, args.num_samples, 1, 1)))
         
         log_q_r_xobs_m = variational_params['qy']
 
@@ -295,7 +296,7 @@ def generate_synthetic_data(n=5000, rho=0.1, miss_ratio=0.2, train_pct=0.8, val_
     mean = [2, -2, 0]  
     rho = 0.1
     cov = [[1, rho, rho], [rho, 1, 0], [rho, 0, 1]]
-    
+
     data = np.random.multivariate_normal(mean, cov, (n))
     observedi = np.random.choice([0, 1], n, p = [miss_ratio, 1-miss_ratio])
     data[:, 1][observedi] = data[:, 2][observedi] # column 2 is observed data, column 1 is miss data

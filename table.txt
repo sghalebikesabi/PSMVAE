@@ -1055,3 +1055,4 @@ data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_a,1.9977866179899
 data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_b,1.596759405269954,1.5458955717325107
 data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_a,1.943420097093125,1.9987590848504875
 data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_a,1.943420097093125,1.9987590848504875
+data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_a,1.943420097093125,1.9987590848504875
