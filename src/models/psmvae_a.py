@@ -108,7 +108,7 @@ class Model(torch.nn.Module):
         #    m_output = torch.sigmoid(torch.einsum("lij, jk -> lij", [m_input, torch.nn.functional.softplus(self.W[i])]) + self.b[i])
         #else:
         #    m_output = torch.sigmoid(torch.einsum("ij, jk -> ij", [m_input, torch.nn.functional.softplus(self.W[i])]) + self.b[i])
-        m_input = torch.cat([x, y], 1)
+        m_input = torch.cat([x, y], -1)
         m_output = torch.sigmoid(self.fc_x_m(m_input))
 
         if self.mnist:

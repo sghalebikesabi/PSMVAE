@@ -61,8 +61,8 @@ class GMVAE(torch.nn.Module):
 
         z = z_mu_post + eps*z_std_post
 
-        if test_mode:
-            z = z.reshape((L*z_mu_post.shape[0], z_mu_post.shape[1]))
+        # if test_mode:
+            # z = z.reshape((L*z_mu_post.shape[0], z_mu_post.shape[1]))
 
         return z, z_mu_post, torch.clamp(z_logvar_post, -15, 15)
 
@@ -79,11 +79,11 @@ class GMVAE(torch.nn.Module):
         x = self.fc_h_xm(h2)
 
         if self.mnist:
-            x[:,:self.input_dim] = torch.sigmoid(x[:,:self.input_dim])
+            x[:,:self.input_dim] = torch.sigmoid(x[...,:self.input_dim])
 
         recon = {
-            'incompl_data': x[:,:self.input_dim],
-            'M_sim_miss': torch.sigmoid(x[:,self.input_dim:])
+            'incompl_data': x[...,:self.input_dim],
+            'M_sim_miss': torch.sigmoid(x[...,self.input_dim:])
         }
                 
         return z_mu_prior, torch.clamp(z_logvar_prior, -15, 15), recon

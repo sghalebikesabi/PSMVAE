@@ -1051,3 +1051,5 @@ data/MNIST/miss_data/MCAR_uniform_frac_20_seed_0,0,PSMVAE_a,0.8627734078209675,0
 data/MNIST/miss_data/MCAR_uniform_frac_80_seed_0,0,PSMVAE_b,0.17407556711705574,0.17642155733146492
 data/MNIST/miss_data/MCAR_uniform_frac_80_seed_0,0,PSMVAE_a,0.9180347774920454,0.9178009116703587
 data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_b,1.596759405269954,1.5458955717325107
+data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_a,1.9977866179899626,1.9987590848504875
+data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_b,1.596759405269954,1.5458955717325107
