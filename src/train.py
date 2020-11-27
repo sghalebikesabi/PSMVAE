@@ -142,13 +142,16 @@ def train_VAE(data_train_full, data_test_full, compl_data_train_full, compl_data
             with torch.no_grad():
                 recon_train, variational_params_train, latent_samples_train = model(data_train_filled_full, torch.tensor(M_sim_miss_train_full).to(args.device))
 
-                train_imputed_xobs_ = renormalization(recon_train['xobs'].cpu(), norm_parameters)
+                train_imputed_xobs_ = renormalization(torch.einsum("ik,kij->ij", [variational_params_train['qy'], recon_train['xobs']]), norm_parameters)
                 train_imputed_xobs_ = rounding(train_imputed_xobs_, compl_data_train_full_renorm)
                 train_xobs_mis_mse = rmse_loss(train_imputed_xobs_.cpu().numpy().squeeze(), compl_data_train_full_renorm, M_sim_miss_train_full)
-                train_imputed_xmis_ = renormalization(recon_train['xmis'].cpu(), norm_parameters)
-                train_imputed_xmis_ = rounding(train_imputed_xmis_, compl_data_train_full_renorm)
-                train_xmis_mis_mse = rmse_loss(train_imputed_xmis_.cpu().numpy().squeeze(), compl_data_train_full_renorm, M_sim_miss_train_full)
-                
+                if 'PSMVAE' in args.model_class:
+                    train_imputed_xmis_ = renormalization(torch.einsum("ik,kij->ij", [variational_params_train['qy'], recon_train['xmis']]), norm_parameters)
+                    train_imputed_xmis_ = rounding(train_imputed_xmis_, compl_data_train_full_renorm)
+                    train_xmis_mis_mse = rmse_loss(train_imputed_xmis_.cpu().numpy().squeeze(), compl_data_train_full_renorm, M_sim_miss_train_full)
+                else:
+                    train_xmis_mis_mse = 0
+
                 wandb.log({'xobs imp rmse': train_xobs_mis_mse, 'xmis imp rmse': train_xmis_mis_mse,})
 
 
