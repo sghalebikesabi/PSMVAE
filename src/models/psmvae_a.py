@@ -43,10 +43,13 @@ class Model(torch.nn.Module):
 
         self.fc_x_m = torch.nn.Linear(self.input_dim + self.r_cat_dim, self.input_dim)
 
-        # self.W = torch.nn.ParameterList([nn.Parameter(torch.zeros((self.input_dim, 1), device=model_params_dict.device)) for i in range(self.r_cat_dim)])
-        # self.b = torch.nn.ParameterList([nn.Parameter(torch.zeros((1, self.input_dim), device=model_params_dict.device)) for i in range(self.r_cat_dim)])
+        # self.W1 = torch.nn.ParameterList([nn.Parameter(torch.zeros((self.input_dim, 1), device=model_params_dict.device)) for i in range(self.r_cat_dim)])
+        # # self.W2 = torch.nn.ParameterList([nn.Parameter(torch.zeros((self.input_dim, 1), device=model_params_dict.device)) for i in range(self.r_cat_dim)])
+        # self.b1 = torch.nn.ParameterList([nn.Parameter(torch.zeros((1, self.input_dim), device=model_params_dict.device)) for i in range(self.r_cat_dim)])
+        # # self.b2 = torch.nn.ParameterList([nn.Parameter(torch.zeros((1, self.input_dim), device=model_params_dict.device)) for i in range(self.r_cat_dim)])
         # for i in range(self.r_cat_dim):
-        #     torch.nn.init.xavier_normal_(self.W[i])
+        #     torch.nn.init.xavier_normal_(self.W1[i])
+        #     # torch.nn.init.xavier_normal_(self.W2[i])
 
     def qy_graph(self, xm):
         # q(y|x)
@@ -103,13 +106,19 @@ class Model(torch.nn.Module):
         h2 = F.relu(self.fc_hz_h(hz))
         x = self.fc_h_xm(h2)
 
-        #m_input = x[...,:self.input_dim] * (1-m.float()) + x[...,self.input_dim:self.input_dim*2] * m
-        #if test_mode:
+        # m_input = x[...,:self.input_dim] * (1-m.float()) + x[...,self.input_dim:self.input_dim*2] * m
+        # if test_mode:
         #    m_output = torch.sigmoid(torch.einsum("lij, jk -> lij", [m_input, torch.nn.functional.softplus(self.W[i])]) + self.b[i])
-        #else:
+        # else:
         #    m_output = torch.sigmoid(torch.einsum("ij, jk -> ij", [m_input, torch.nn.functional.softplus(self.W[i])]) + self.b[i])
         m_input = torch.cat([x[...,:self.input_dim], y], -1)
         m_output = torch.sigmoid(self.fc_x_m(m_input))
+        # if test_mode:
+        #    m_output_1 = (torch.einsum("lij, jk -> lij", [x[...,:self.input_dim], torch.nn.functional.softplus(self.W1[i])]) + self.b1[i])
+        # #    m_output_2 = (torch.einsum("lij, jk -> lij", [x[...,self.input_dim:self.input_dim*2], torch.nn.functional.softplus(self.W2[i])]) + self.b2[i])
+        # else:
+        #    m_output_1 = (torch.einsum("ij, jk -> ij", [x[...,:self.input_dim], torch.nn.functional.softplus(self.W1[i])]) + self.b1[i])
+        # #    m_output_2 = (torch.einsum("ij, jk -> ij", [x[...,self.input_dim:self.input_dim*2], torch.nn.functional.softplus(self.W2[i])]) + self.b2[i])
 
         if self.mnist:
             x[...,:self.input_dim*2] = torch.sigmoid(x[:,:self.input_dim*2])

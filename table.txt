@@ -1099,3 +1099,8 @@ data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,GMVAE,1.656440411250314,
 data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,GMVAE,1.6309662361269737,1.622304014698938
 data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_b,nan,0.7379075793157408
 data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_b,0.7944298311518071,0.7379075793157408
+data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_b,0.7944298311518071,0.7379075793157408
+data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_a,2.9585259189008024,3.011265183083206
+data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_a,2.1011174443460914,2.1652717473565266
+data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_a,2.2272110452984273,2.2936971382729157
+data/synth/miss_data/n_5000_m_2_missratio_20_seed_0,123,PSMVAE_a,1.7385540675226008,1.763337873037619

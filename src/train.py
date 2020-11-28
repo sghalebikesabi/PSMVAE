@@ -67,7 +67,7 @@ def loss(recon, variational_params, latent_samples, data, compl_data, M_obs, M_m
     else:
         kld_xmis = torch.tensor([0]).to(data.device)
         mse_xmis = torch.tensor([0]).to(data.device)
-        log_xmis_prior = torch.tensor([0]).to(data.device)
+        # log_xmis_prior = torch.tensor([0]).to(data.device)
         # recon_data_xmis = compl_data
 
     if variational_params['qy'] is not None:
