@@ -46,19 +46,25 @@ def loss(recon, variational_params, latent_samples, data, compl_data, M_obs, M_m
     if variational_params['xmis_mu'] is not None:
         
         if 'PSMVAE' not in args.model_class: 
-            kld_xmis = normal_KLD(latent_samples['xmis'], variational_params['xmis_mu'], variational_params['xmis_logvar'], recon['xmis'], torch.sqrt(torch.tensor([0.25]).to(args.device))).sum(-1)
+            kld_xmis = normal_KLD(latent_samples['xmis'], variational_params['xmis_mu'], variational_params['xmis_logvar'], recon['xmis'], torch.tensor([0.25]).to(args.device)).sum(-1)
             mse_xmis = torch.tensor([0]).to(data.device)
 
         elif 'PSMVAE' in args.model_class:
             if args.mnist:
-                # kld_xmis = (M_miss*normal_KLD(latent_samples['xmis'], variational_params['xmis_mu'], variational_params['xmis_logvar'], recon['xmis'], torch.sqrt(torch.tensor([0.25]).to(args.device)))).sum(-1)
+                # kld_xmis = (M_miss*normal_KLD(latent_samples['xmis'], variational_params['xmis_mu'], variational_params['xmis_logvar'], recon['xmis'], (torch.tensor([0.25]).to(args.device)))).sum(-1)
                 kld_xmis = (M_miss*torch.nn.functional.binary_cross_entropy_with_logits(latent_samples['xmis'], torch.sigmoid(variational_params['xmis_mu']))).sum(-1)
-                kld_xmis += (M_obs*normal_KLD(latent_samples['xmis'], variational_params['xmis_mu'], variational_params['xmis_logvar'], recon['xmis'], torch.sqrt(torch.tensor([0.25]).to(args.device)))).sum(-1) * args.pi
+                kld_xmis += (M_obs*normal_KLD(latent_samples['xmis'], variational_params['xmis_mu'], variational_params['xmis_logvar'], recon['xmis'], (torch.tensor([0.25]).to(args.device)))).sum(-1) * args.pi
                 
                 mse_xmis = -log_normal(data*M_obs, recon['xmis']*M_obs, torch.tensor([0.25]).to(args.device)) * (1 - args.pi)
             else:
-                kld_xmis = (M_miss*normal_KLD(latent_samples['xmis'], variational_params['xmis_mu'], variational_params['xmis_logvar'], recon['xmis'], torch.sqrt(torch.tensor([0.25]).to(args.device)))).sum(-1)
-                kld_xmis += (M_obs*normal_KLD(latent_samples['xmis'], variational_params['xmis_mu'], variational_params['xmis_logvar'], recon['xmis'], torch.sqrt(torch.tensor([0.25]).to(args.device)))).sum(-1) * args.pi
+                if args.model_class == 'PSMVAE_c':
+                    kld_xmis = (M_miss*normal_KLD(latent_samples['xmis'], recon['xmis'], torch.log(torch.tensor([0.25]).to(args.device)), variational_params['xmis_mu_prior'], variational_params['xmis_logvar_prior'])).sum(-1)
+                    kld_xmis += (M_obs*normal_KLD(latent_samples['xmis'], recon['xmis'], torch.log(torch.tensor([0.25]).to(args.device)), variational_params['xmis_mu_prior'], variational_params['xmis_logvar_prior'])).sum(-1) * args.pi
+                else:
+                    kld_xmis = (M_miss*normal_KLD(latent_samples['xmis'], variational_params['xmis_mu'], variational_params['xmis_logvar'], recon['xmis'], torch.log(torch.tensor([0.25]).to(args.device)))).sum(-1)
+                    kld_xmis += (M_obs*normal_KLD(latent_samples['xmis'], variational_params['xmis_mu'], variational_params['xmis_logvar'], recon['xmis'], torch.log(torch.tensor([0.25]).to(args.device)))).sum(-1) * args.pi
+                # kld_xmis = (M_miss*normal_KLD(latent_samples['xmis'], recon['xmis'], (torch.tensor([0.25]).to(args.device)), variational_params['xmis_mu_prior'], torch.tensor([0.25]).to(args.device))).sum(-1)
+                # kld_xmis += (M_obs*normal_KLD(latent_samples['xmis'], recon['xmis'], (torch.tensor([0.25]).to(args.device)), variational_params['xmis_mu_prior'], torch.tensor([0.25]).to(args.device))).sum(-1) * args.pi
                 
                 mse_xmis = -log_normal(data*M_obs, recon['xmis']*M_obs, torch.tensor([0.25]).to(args.device)) * (1 - args.pi)
                             

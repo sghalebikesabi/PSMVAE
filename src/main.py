@@ -61,7 +61,7 @@ def parse_args(argv):
     parser.add_argument('--weight-decay', type=float, default=0)
     parser.add_argument('--miss-mask-training', action='store_true', default=False,
                             help='incorporation of missingness mask in training')  
-    parser.add_argument('--num-samples', type=int, default=100, help='number of draws')
+    parser.add_argument('--num-samples', type=int, default=1, help='number of draws')
     parser.add_argument('--num-samples-train', type=int, default=1, help='number of draws in training')
     parser.add_argument('--z-dim', type=int, default=20, help='dimension of latent factor z (default: 20)')
     parser.add_argument('--r-cat-dim', type=int, default=10, help='dimension of latent factor s (default: 10)')  

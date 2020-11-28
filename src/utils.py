@@ -102,8 +102,8 @@ def log_normal(x, mu, var, eps=0.0, axis=-1):
     return -0.5 * (np.log(2 * math.pi) + torch.log(var) + torch.square(x - mu) / var)
 
 
-def normal_KLD(z, zm, zv, zm_prior, zv_prior):
-    return(log_normal(z, zm, torch.exp(zv)) - log_normal(z, zm_prior, torch.exp(zv_prior)))
+def normal_KLD(z, zm, log_zv, zm_prior, log_zv_prior):
+    return(log_normal(z, zm, torch.exp(log_zv)) - log_normal(z, zm_prior, torch.exp(log_zv_prior)))
 
 
 def cluster_acc(qy_logit, targets):
