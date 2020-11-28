@@ -4,6 +4,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 from torchvision.utils import save_image
 
+
 def make_deterministic(seed):
     torch.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
