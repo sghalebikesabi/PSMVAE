@@ -53,7 +53,7 @@ def parse_args(argv):
     parser.add_argument('--seed', type=int, default=123, metavar='S', help='random seed (default: 1)')
 
     # model parameters
-    parser.add_argument('--model-class', nargs='?', default='PSMVAE_c', choices=model_map.keys(), help='model class, choices: ' 
+    parser.add_argument('--model-class', nargs='?', default='hivae', choices=model_map.keys(), help='model class, choices: ' 
                             + ' '.join(model_map.keys()))
     parser.add_argument('--batch-size', type=int, default=512, metavar='N', help='input batch size for training (default: 200)')
     parser.add_argument('--max-epochs', type=int, default=1, metavar='N', help='number of epochs to train (default: 1,000)')
@@ -76,6 +76,7 @@ def parse_args(argv):
     parser.add_argument('--hint-rate', help='hint probability of GAIN', default=0.9, type=float)    
     parser.add_argument('--alpha', help='hyperparameter of GAIN', default=100, type=float)
     parser.add_argument('--mul-imp', action='store_true', default=False, help='multiple imputation') 
+    parser.add_argument('--dim_latent_y_partition',type=int, nargs='+', help='Partition of the Y latent space')
 
     args = parser.parse_args()
     
@@ -187,6 +188,8 @@ def main(args):
             train_imputed = np.mean(train_imputed, axis=0) 
             test_imputed = np.mean(test_imputed, axis=0)
     else:
+        if args.model_class == 'hivae':
+            train_imputed, test_imputed = model_map[args.model_class](data_train, data_test, M_sim_miss_train, M_sim_miss_test, args)
         if args.model_class == 'mean':
             data_train_df = pd.DataFrame(data_train)
             data_test_df = pd.DataFrame(data_test)
