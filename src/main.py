@@ -18,13 +18,13 @@ from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.linear_model import BayesianRidge
 
 
-
 model_map = {
     'miwae': None,
     'notmiwae': None,
     'missForest': IterativeImputer,
     'mice': IterativeImputer,
     'gain': None,
+    'hivae': None,
     'mean': 'mean',
     'VAE': train_VAE,
     'GMVAE': train_VAE,
@@ -53,15 +53,15 @@ def parse_args(argv):
     parser.add_argument('--seed', type=int, default=123, metavar='S', help='random seed (default: 1)')
 
     # model parameters
-    parser.add_argument('--model-class', nargs='?', default='PSMVAE_b', choices=model_map.keys(), help='model class, choices: ' 
+    parser.add_argument('--model-class', nargs='?', default='PSMVAE_c', choices=model_map.keys(), help='model class, choices: ' 
                             + ' '.join(model_map.keys()))
     parser.add_argument('--batch-size', type=int, default=512, metavar='N', help='input batch size for training (default: 200)')
-    parser.add_argument('--max-epochs', type=int, default=1000, metavar='N', help='number of epochs to train (default: 1,000)')
+    parser.add_argument('--max-epochs', type=int, default=1, metavar='N', help='number of epochs to train (default: 1,000)')
     parser.add_argument('--learning-rate', type=float, default=1e-3, metavar='N', help='learning rate of Adam optimizer')
     parser.add_argument('--weight-decay', type=float, default=0)
     parser.add_argument('--miss-mask-training', action='store_true', default=False,
                             help='incorporation of missingness mask in training')  
-    parser.add_argument('--num-samples', type=int, default=1, help='number of draws')
+    parser.add_argument('--num-samples', type=int, default=10, help='number of draws')
     parser.add_argument('--num-samples-train', type=int, default=1, help='number of draws in training')
     parser.add_argument('--z-dim', type=int, default=20, help='dimension of latent factor z (default: 20)')
     parser.add_argument('--r-cat-dim', type=int, default=10, help='dimension of latent factor s (default: 10)')  
@@ -88,12 +88,16 @@ def parse_args(argv):
         from models import gain
         model_map['gain'] = gain.gain
 
-    if 'miwae' in args.model_class:
+    elif 'miwae' in args.model_class:
         from models import miwae
         model_map['miwae'] = miwae.notMiwae
         model_map['notmiwae'] = miwae.notMiwae
         args.z_dim = 1
         args.num_samples_train = 50
+
+    elif args.model_class == 'hivae':
+        from models import hivae
+        model_map['hivae'] = hivae.hivae
 
     if 'IPTW' in args.model_class:
         args.iptw = True

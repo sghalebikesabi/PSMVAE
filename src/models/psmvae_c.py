@@ -129,7 +129,7 @@ class Model(torch.nn.Module):
 
         qy_logit, qy = self.qy_graph(xm)
         z, zm, zv, zm_prior, zv_prior, recon = [[None] * self.r_cat_dim for i in range(6)]
-        xmis, xmis_mu, xmis_logvar, xmis_mu_prior, xmis_logvar_prior, filled_xm = [[None] * self.r_cat_dim for i in range(6)]
+        xmis, xmis_mu, xmis_logvar, xmis_mu_prior, xmis_logvar_prior = [[None] * self.r_cat_dim for i in range(5)]
         y_ = torch.zeros([x.shape[0], self.r_cat_dim]).to(x.device)
         for i in range(self.r_cat_dim):
             y = y_ + torch.eye(self.r_cat_dim)[i].to(x.device)
@@ -144,6 +144,7 @@ class Model(torch.nn.Module):
             else:
                 z[i], zm[i], zv[i] = self.qz_graph(xm, y, test_mode, L)
                 zm_prior[i], zv_prior[i], recon[i] = self.decoder(z[i], y.repeat((L, 1, 1)), test_mode, L)
+                xmis[i], xmis_mu[i], xmis_logvar[i], xmis_mu_prior[i], xmis_logvar_prior[i] = [torch.zeros(1)]*5
         
         latent_samples = {
             'z': torch.stack(z),

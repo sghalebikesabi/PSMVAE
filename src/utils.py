@@ -24,7 +24,12 @@ def impute(model, data, args, kwargs):
         variational_params['py'] = torch.ones_like(variational_params['qy']).to(args.device)/variational_params['qy'].shape[1]
 
         log_p_xobs_given_z_r =  M_obs*log_normal(data_filled, recon['xobs'], torch.tensor([0.25]).to(args.device)) # ! 0.25
-        if 'PSMVAE' in args.model_class:
+        if args.model_class == 'PSMVAE_c':
+          # log_p_xmis_given_z_r = log_normal(latent_samples['xmis']*M_miss, variational_params['xmis_mu_prior']*M_miss, torch.exp(variational_params['xmis_logvar_prior']))
+          # log_p_xmis_given_z_r = 0 # log_normal(latent_samples['xmis']*M_miss, recon['xmis']*M_miss, torch.tensor([0.5])) 
+          # log_p_xmis_given_z_r += log_normal(latent_samples['xmis']*M_obs, variational_params['xmis_mu_prior']*M_obs, torch.exp(variational_params['xmis_logvar_prior'])) * args.pi # ! 0.25
+          log_p_xmis_given_z_r = log_normal(data_filled*M_obs, recon['xmis']*M_obs, torch.tensor([0.25]).to(args.device)) * (1 - args.pi) # ! 0.25
+        elif 'PSMVAE' in args.model_class:
           log_p_xmis_given_z_r = log_normal(latent_samples['xmis']*M_miss, recon['xmis']*M_miss, torch.tensor([0.25]).to(args.device)) 
           # log_p_xmis_given_z_r = 0 # log_normal(latent_samples['xmis']*M_miss, recon['xmis']*M_miss, torch.tensor([0.5])) 
           log_p_xmis_given_z_r += log_normal(latent_samples['xmis']*M_obs, recon['xmis']*M_obs, torch.tensor([0.25]).to(args.device)) * args.pi # ! 0.25
