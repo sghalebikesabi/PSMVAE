@@ -32,6 +32,7 @@ model_map = {
     'PSMVAEwoM': train_VAE,
     'PSMVAE_a': train_VAE,
     'PSMVAE_b': train_VAE,
+    'PSMVAE_c': train_VAE,
 }
 
 
@@ -52,10 +53,10 @@ def parse_args(argv):
     parser.add_argument('--seed', type=int, default=123, metavar='S', help='random seed (default: 1)')
 
     # model parameters
-    parser.add_argument('--model-class', nargs='?', default='PSMVAE_a', choices=model_map.keys(), help='model class, choices: ' 
+    parser.add_argument('--model-class', nargs='?', default='PSMVAE_b', choices=model_map.keys(), help='model class, choices: ' 
                             + ' '.join(model_map.keys()))
     parser.add_argument('--batch-size', type=int, default=512, metavar='N', help='input batch size for training (default: 200)')
-    parser.add_argument('--max-epochs', type=int, default=30, metavar='N', help='number of epochs to train (default: 1,000)')
+    parser.add_argument('--max-epochs', type=int, default=1000, metavar='N', help='number of epochs to train (default: 1,000)')
     parser.add_argument('--learning-rate', type=float, default=1e-3, metavar='N', help='learning rate of Adam optimizer')
     parser.add_argument('--weight-decay', type=float, default=0)
     parser.add_argument('--miss-mask-training', action='store_true', default=False,

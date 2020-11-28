@@ -6,7 +6,7 @@ from torchvision import datasets, transforms
 from tqdm import tqdm
 
 from utils import rmse_loss, log_normal, normal_KLD, impute, init_weights, renormalization, rounding, save_image_reconstructions_with_mask
-from models import vae, gmvae, psmvae_a, psmvae_b
+from models import vae, gmvae, psmvae_a, psmvae_b, psmvae_c
 
 model_map = {
     'VAE': vae.VAE,
@@ -15,6 +15,7 @@ model_map = {
     'PSMVAEwoM': psmvae_b.Model,
     'PSMVAE_b': psmvae_b.Model,
     'PSMVAE_a': psmvae_a.Model,
+    'PSMVAE_c': psmvae_c.Model,
 }
 
 
