@@ -41,8 +41,8 @@ def parse_args(argv):
     parser = argparse.ArgumentParser(description='VAEs for missingness example')
 
     # input data
-    parser.add_argument('--compl-data-file', nargs='?', default='data/synth/n_5000_m_2_seed_0', help='complete data file (without header, without file name ending)')
-    parser.add_argument('--miss-data-file', nargs='?', default='data/synth/miss_data/n_5000_m_2_missratio_20_seed_0', help='missing data file (without header, without file name ending)')
+    parser.add_argument('--compl-data-file', nargs='?', default='data/adult/data_0', help='complete data file (without header, without file name ending)')
+    parser.add_argument('--miss-data-file', nargs='?', default='data/adult/miss_data/MCAR_notuniform_frac_20_seed_0', help='missing data file (without header, without file name ending)')
     parser.add_argument('--targets-file', nargs='?', default=None, help='targets file (without header, without file name ending)')
     
     # logging results
@@ -56,7 +56,7 @@ def parse_args(argv):
     parser.add_argument('--model-class', nargs='?', default='hivae', choices=model_map.keys(), help='model class, choices: ' 
                             + ' '.join(model_map.keys()))
     parser.add_argument('--batch-size', type=int, default=512, metavar='N', help='input batch size for training (default: 200)')
-    parser.add_argument('--max-epochs', type=int, default=1, metavar='N', help='number of epochs to train (default: 1,000)')
+    parser.add_argument('--max-epochs', type=int, default=2, metavar='N', help='number of epochs to train (default: 1,000)')
     parser.add_argument('--learning-rate', type=float, default=1e-3, metavar='N', help='learning rate of Adam optimizer')
     parser.add_argument('--weight-decay', type=float, default=0)
     parser.add_argument('--miss-mask-training', action='store_true', default=False,
