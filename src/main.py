@@ -251,8 +251,12 @@ def main(args):
         np.savetxt(imputed_dir + f'/{args.model_class}.test', test_imputed, delimiter=',')
     
         # compute loss
-        train_mis_mse = rmse_loss(train_imputed, compl_data_train, M_sim_miss_train)
-        test_mis_mse = rmse_loss(test_imputed, compl_data_test, M_sim_miss_test)
+        if args.model_class == 'hivae':
+            train_mis_mse = rmse_loss(train_imputed, compl_data_train[:len(train_imputed)], M_sim_miss_train[:len(train_imputed)])
+            test_mis_mse = rmse_loss(test_imputed, compl_data_test[:len(test_imputed)], M_sim_miss_test[:len(test_imputed)])
+        else:
+            train_mis_mse = rmse_loss(train_imputed, compl_data_train, M_sim_miss_train)
+            test_mis_mse = rmse_loss(test_imputed, compl_data_test, M_sim_miss_test)
 
         # log loss
         wandb.log({'Train Imputation RMSE loss': train_mis_mse})

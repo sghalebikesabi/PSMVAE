@@ -52,12 +52,12 @@ def evaluate(test_data, miss_mask_test, true_miss_mask_test, types_dict, tf_node
         
         #Randomize the data in the mini-batches
     #        random_perm = np.random.permutation(range(np.shape(data)[0]))
-        random_perm = range(np.shape(test_data)[0])
+        n_batches_test = int(np.floor(np.shape(test_data)[0]/args.batch_size))
+        random_perm = range(args.batch_size * n_batches_test) # range(np.shape(test_data)[0])
         train_data_aux = test_data[random_perm,:]
         miss_mask_aux = miss_mask_test[random_perm,:]
         true_miss_mask_aux = true_miss_mask_test[random_perm,:]
         
-        n_batches_test = int(np.floor(np.shape(test_data)[0]/args.batch_size))
 
         for i in range(n_batches_test):      
             
